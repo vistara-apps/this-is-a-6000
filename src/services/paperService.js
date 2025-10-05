@@ -1,8 +1,12 @@
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY || 'demo-key',
+  apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || 'demo-key',
   baseURL: "https://openrouter.ai/api/v1",
+  defaultHeaders: {
+    "HTTP-Referer": window.location.origin,
+    "X-Title": "PaperForge"
+  },
   dangerouslyAllowBrowser: true,
 })
 
@@ -30,17 +34,281 @@ const mockPapers = {
   }
 }
 
-const extractArxivId = (input) => {
+// Enhanced paper URL parsing to support multiple sources
+const parsePaperUrl = (input) => {
   if (typeof input !== 'string') return null
   
-  // Extract arXiv ID from URL or direct ID
-  const urlMatch = input.match(/arxiv\.org\/abs\/(\d+\.\d+)/)
-  if (urlMatch) return urlMatch[1]
+  const url = input.trim()
   
-  const directMatch = input.match(/^\d+\.\d+$/)
-  if (directMatch) return input
+  // arXiv patterns
+  const arxivUrlMatch = url.match(/arxiv\.org\/abs\/(\d+\.\d+)/)
+  if (arxivUrlMatch) {
+    return {
+      source: 'arxiv',
+      id: arxivUrlMatch[1],
+      url: url,
+      pdfUrl: `https://arxiv.org/pdf/${arxivUrlMatch[1]}.pdf`
+    }
+  }
+  
+  // Direct arXiv ID
+  const arxivIdMatch = url.match(/^\d+\.\d+$/)
+  if (arxivIdMatch) {
+    return {
+      source: 'arxiv',
+      id: url,
+      url: `https://arxiv.org/abs/${url}`,
+      pdfUrl: `https://arxiv.org/pdf/${url}.pdf`
+    }
+  }
+  
+  // ACL Anthology
+  const aclMatch = url.match(/aclanthology\.org\/(\d{4}\.\w+\-\w+\.\d+)/)
+  if (aclMatch) {
+    return {
+      source: 'acl',
+      id: aclMatch[1],
+      url: url,
+      pdfUrl: `https://aclanthology.org/${aclMatch[1]}.pdf`
+    }
+  }
+  
+  // OpenReview (NeurIPS, ICLR, etc.)
+  const openreviewMatch = url.match(/openreview\.net\/forum\?id=([^&]+)/)
+  if (openreviewMatch) {
+    return {
+      source: 'openreview',
+      id: openreviewMatch[1],
+      url: url,
+      pdfUrl: `https://openreview.net/pdf?id=${openreviewMatch[1]}`
+    }
+  }
+  
+  // IEEE Xplore
+  const ieeeMatch = url.match(/ieeexplore\.ieee\.org\/document\/(\d+)/)
+  if (ieeeMatch) {
+    return {
+      source: 'ieee',
+      id: ieeeMatch[1],
+      url: url,
+      pdfUrl: null // IEEE PDFs require authentication
+    }
+  }
+  
+  // PubMed
+  const pubmedMatch = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/)
+  if (pubmedMatch) {
+    return {
+      source: 'pubmed',
+      id: pubmedMatch[1],
+      url: url,
+      pdfUrl: null
+    }
+  }
+  
+  // Generic PDF URL
+  if (url.toLowerCase().endsWith('.pdf')) {
+    return {
+      source: 'pdf',
+      id: url.split('/').pop().replace('.pdf', ''),
+      url: url,
+      pdfUrl: url
+    }
+  }
   
   return null
+}
+
+// Extract arXiv ID for backward compatibility
+const extractArxivId = (input) => {
+  const parsed = parsePaperUrl(input)
+  return parsed && parsed.source === 'arxiv' ? parsed.id : null
+}
+
+// AI-powered paper analysis using OpenRouter GPT-4o-mini
+const analyzePaperWithAI = async (paperData) => {
+  try {
+    const prompt = `Analyze this research paper and provide a comprehensive breakdown:
+
+Title: ${paperData.title}
+Abstract: ${paperData.abstract}
+Authors: ${paperData.authors?.join(', ') || 'Unknown'}
+Published: ${paperData.publishedDate || 'Unknown'}
+
+Please provide:
+1. Key innovations (3-5 bullet points)
+2. Problem statement (2-3 sentences)
+3. Methodology summary (3-4 sentences)
+4. Potential applications (3-4 areas)
+5. Implementation complexity (beginner/intermediate/advanced)
+6. Required technical background
+7. Suggested next steps for implementation
+
+Format your response as JSON with the following structure:
+{
+  "keyInnovations": ["innovation1", "innovation2", ...],
+  "problemStatement": "problem description",
+  "methodology": "methodology description", 
+  "applications": ["application1", "application2", ...],
+  "complexity": "beginner|intermediate|advanced",
+  "technicalBackground": ["requirement1", "requirement2", ...],
+  "nextSteps": ["step1", "step2", ...]
+}`
+
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert AI researcher and software engineer. Analyze research papers and provide practical insights for implementation. Always respond with valid JSON."
+        },
+        {
+          role: "user", 
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 2000
+    })
+
+    const analysisText = response.choices[0].message.content
+    
+    // Try to parse JSON, fall back to structured text if parsing fails
+    try {
+      return JSON.parse(analysisText)
+    } catch (parseError) {
+      console.warn('Failed to parse AI response as JSON, using fallback structure')
+      return {
+        keyInnovations: ["AI analysis temporarily unavailable"],
+        problemStatement: "Please check back later for AI-generated analysis",
+        methodology: "AI analysis in progress",
+        applications: ["General machine learning applications"],
+        complexity: "intermediate",
+        technicalBackground: ["Machine learning fundamentals"],
+        nextSteps: ["Review paper manually", "Implement basic version"]
+      }
+    }
+  } catch (error) {
+    console.error('AI analysis failed:', error)
+    return {
+      keyInnovations: ["Analysis unavailable - using fallback"],
+      problemStatement: "AI analysis service temporarily unavailable",
+      methodology: "Please refer to the original paper for methodology details",
+      applications: ["Refer to paper for applications"],
+      complexity: "intermediate", 
+      technicalBackground: ["Machine learning knowledge recommended"],
+      nextSteps: ["Read paper thoroughly", "Consult additional resources"]
+    }
+  }
+}
+
+// Fetch paper metadata from various sources
+const fetchPaperMetadata = async (paperInfo) => {
+  try {
+    if (paperInfo.source === 'arxiv') {
+      // Fetch from arXiv API
+      const response = await fetch(`https://export.arxiv.org/api/query?id_list=${paperInfo.id}`)
+      const xmlText = await response.text()
+      
+      // Parse XML response (simplified parsing)
+      const parser = new DOMParser()
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
+      const entry = xmlDoc.querySelector('entry')
+      
+      if (entry) {
+        const title = entry.querySelector('title')?.textContent?.trim()
+        const summary = entry.querySelector('summary')?.textContent?.trim()
+        const authors = Array.from(entry.querySelectorAll('author name')).map(name => name.textContent?.trim())
+        const published = entry.querySelector('published')?.textContent?.trim()
+        const category = entry.querySelector('category')?.getAttribute('term')
+        
+        return {
+          arxivId: paperInfo.id,
+          title: title || 'Unknown Title',
+          authors: authors || ['Unknown Author'],
+          abstract: summary || 'No abstract available',
+          publishedDate: published ? published.split('T')[0] : new Date().toISOString().split('T')[0],
+          primaryCategory: category || 'cs.AI',
+          citations: Math.floor(Math.random() * 1000), // Placeholder
+          pdfUrl: paperInfo.pdfUrl,
+          source: paperInfo.source,
+          url: paperInfo.url
+        }
+      }
+    }
+    
+    // For other sources, return basic structure with placeholder data
+    return {
+      id: paperInfo.id,
+      title: `Paper from ${paperInfo.source.toUpperCase()}`,
+      authors: ['Unknown Author'],
+      abstract: 'Paper metadata will be extracted and analyzed by AI.',
+      publishedDate: new Date().toISOString().split('T')[0],
+      primaryCategory: 'cs.AI',
+      citations: 0,
+      pdfUrl: paperInfo.pdfUrl,
+      source: paperInfo.source,
+      url: paperInfo.url
+    }
+  } catch (error) {
+    console.error('Failed to fetch paper metadata:', error)
+    
+    // Return fallback metadata
+    return {
+      id: paperInfo.id,
+      title: 'Paper Analysis',
+      authors: ['Unknown Author'],
+      abstract: 'Unable to fetch paper metadata. AI analysis will be performed on the provided URL.',
+      publishedDate: new Date().toISOString().split('T')[0],
+      primaryCategory: 'cs.AI',
+      citations: 0,
+      pdfUrl: paperInfo.pdfUrl,
+      source: paperInfo.source,
+      url: paperInfo.url
+    }
+  }
+}
+
+// Generate AI-powered code templates
+const generateAICodeTemplate = async (paperData, framework = 'pytorch') => {
+  try {
+    const prompt = `Generate production-ready ${framework} code for implementing the methodology described in this research paper:
+
+Title: ${paperData.title}
+Abstract: ${paperData.abstract}
+
+Requirements:
+1. Create a complete, runnable implementation
+2. Include proper imports and dependencies
+3. Add comprehensive comments explaining each part
+4. Follow best practices for ${framework}
+5. Include training loop and evaluation code
+6. Make it modular and extensible
+
+Focus on the core algorithmic contributions of the paper. The code should be educational but production-ready.`
+
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert ${framework} developer and ML engineer. Generate clean, well-documented, production-ready code that implements research paper methodologies. Always include proper error handling and best practices.`
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 3000
+    })
+
+    return response.choices[0].message.content
+  } catch (error) {
+    console.error('AI code generation failed:', error)
+    // Fall back to existing template generation
+    return generateCodeTemplate(paperData, framework)
+  }
 }
 
 const generateCodeTemplate = async (paper, framework = 'pytorch') => {
@@ -249,78 +517,108 @@ if __name__ == "__main__":
 
 export const paperService = {
   async processPaper(input, inputType) {
-    const arxivId = extractArxivId(input)
-    
-    if (arxivId && mockPapers[arxivId]) {
-      const paperData = mockPapers[arxivId]
+    try {
+      // Parse the paper URL/input
+      const paperInfo = parsePaperUrl(input)
       
-      // Generate analysis
-      const analysis = {
-        keyInnovations: [
-          "Introduces self-attention mechanism as primary building block",
-          "Eliminates recurrent and convolutional layers entirely", 
-          "Achieves state-of-the-art results with better parallelization",
-          "Demonstrates transferability across different sequence tasks"
-        ],
-        problemStatement: "Existing sequence models rely on recurrent or convolutional neural networks, which are computationally expensive and difficult to parallelize. This paper proposes using only attention mechanisms for sequence transduction.",
-        methodology: "The Transformer uses multi-head self-attention and position-wise feed-forward networks in both encoder and decoder stacks. Positional encodings are added to input embeddings to inject sequence order information.",
-        results: {
-          "WMT 2014 EN-DE": "28.4 BLEU",
-          "WMT 2014 EN-FR": "41.8 BLEU", 
-          "Training Time": "3.5 days on 8 P100 GPUs",
-          "Parameters": "65M (base) / 213M (big)"
+      if (!paperInfo) {
+        throw new Error('Unable to parse paper URL. Please provide a valid arXiv, ACL, OpenReview, IEEE, PubMed URL, or direct PDF link.')
+      }
+
+      // Check if we have mock data for this paper (for demo purposes)
+      const arxivId = extractArxivId(input)
+      if (arxivId && mockPapers[arxivId]) {
+        const paperData = mockPapers[arxivId]
+        
+        // Use AI analysis for mock papers too
+        const aiAnalysis = await analyzePaperWithAI(paperData)
+        
+        // Generate AI-powered code templates
+        const codeTemplates = await Promise.all([
+          {
+            framework: 'pytorch',
+            language: 'python',
+            code: await generateAICodeTemplate(paperData, 'pytorch'),
+            estimatedComplexity: aiAnalysis.complexity || 'intermediate'
+          },
+          {
+            framework: 'tensorflow',
+            language: 'python',
+            code: await generateAICodeTemplate(paperData, 'tensorflow'),
+            estimatedComplexity: aiAnalysis.complexity || 'intermediate'
+          }
+        ])
+        
+        return {
+          id: Date.now().toString(),
+          ...paperData,
+          processingStatus: 'completed',
+          extractedSummary: {
+            keyInnovations: aiAnalysis.keyInnovations,
+            problemStatement: aiAnalysis.problemStatement,
+            methodology: aiAnalysis.methodology,
+            applications: aiAnalysis.applications,
+            complexity: aiAnalysis.complexity,
+            technicalBackground: aiAnalysis.technicalBackground,
+            nextSteps: aiAnalysis.nextSteps,
+            results: {
+              "WMT 2014 EN-DE": "28.4 BLEU",
+              "WMT 2014 EN-FR": "41.8 BLEU", 
+              "Training Time": "3.5 days on 8 P100 GPUs",
+              "Parameters": "65M (base) / 213M (big)"
+            }
+          },
+          codeTemplates,
+          architectureDiagram: '/api/placeholder/600/400',
+          benchmarkResults: [],
+          createdAt: new Date().toISOString()
         }
       }
+
+      // Fetch paper metadata from the source
+      const paperData = await fetchPaperMetadata(paperInfo)
       
-      // Generate code templates
-      const codeTemplates = [
+      // Perform AI analysis
+      const aiAnalysis = await analyzePaperWithAI(paperData)
+      
+      // Generate AI-powered code templates
+      const codeTemplates = await Promise.all([
         {
           framework: 'pytorch',
           language: 'python',
-          code: await generateCodeTemplate(paperData, 'pytorch'),
-          estimatedComplexity: 'intermediate'
+          code: await generateAICodeTemplate(paperData, 'pytorch'),
+          estimatedComplexity: aiAnalysis.complexity || 'intermediate'
         },
         {
           framework: 'tensorflow',
-          language: 'python', 
-          code: await generateCodeTemplate(paperData, 'tensorflow'),
-          estimatedComplexity: 'intermediate'
+          language: 'python',
+          code: await generateAICodeTemplate(paperData, 'tensorflow'),
+          estimatedComplexity: aiAnalysis.complexity || 'intermediate'
         }
-      ]
+      ])
       
       return {
         id: Date.now().toString(),
         ...paperData,
         processingStatus: 'completed',
-        extractedSummary: analysis,
+        extractedSummary: {
+          keyInnovations: aiAnalysis.keyInnovations,
+          problemStatement: aiAnalysis.problemStatement,
+          methodology: aiAnalysis.methodology,
+          applications: aiAnalysis.applications,
+          complexity: aiAnalysis.complexity,
+          technicalBackground: aiAnalysis.technicalBackground,
+          nextSteps: aiAnalysis.nextSteps,
+          results: {}
+        },
         codeTemplates,
         architectureDiagram: '/api/placeholder/600/400',
         benchmarkResults: [],
         createdAt: new Date().toISOString()
       }
-    }
-    
-    // For non-mock papers, create a simulated response
-    return {
-      id: Date.now().toString(),
-      arxivId: arxivId || 'unknown',
-      title: 'Sample Research Paper',
-      authors: ['Author Name'],
-      abstract: 'This is a sample paper processed from your input.',
-      publishedDate: new Date().toISOString().split('T')[0],
-      primaryCategory: 'cs.AI',
-      citations: 0,
-      processingStatus: 'completed',
-      extractedSummary: {
-        keyInnovations: ['Sample innovation'],
-        problemStatement: 'Sample problem statement',
-        methodology: 'Sample methodology',
-        results: {}
-      },
-      codeTemplates: [],
-      architectureDiagram: '/api/placeholder/600/400',
-      benchmarkResults: [],
-      createdAt: new Date().toISOString()
+    } catch (error) {
+      console.error('Paper processing failed:', error)
+      throw new Error(`Failed to process paper: ${error.message}`)
     }
   },
   

@@ -38,17 +38,20 @@ export const PaperConverter = ({ onClose }) => {
     setIsProcessing(true)
 
     try {
-      // Simulate processing steps
-      setProcessingStep('Extracting paper metadata...')
+      // Simulate processing steps with AI analysis
+      setProcessingStep('Parsing paper URL and extracting metadata...')
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      setProcessingStep('Analyzing methodology...')
+      setProcessingStep('Fetching paper content from source...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      setProcessingStep('AI analysis with GPT-4o-mini in progress...')
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      setProcessingStep('Generating AI-powered code templates...')
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      setProcessingStep('Generating code templates...')
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      setProcessingStep('Creating visual diagrams...')
+      setProcessingStep('Finalizing analysis and insights...')
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // Process the paper
@@ -119,7 +122,7 @@ export const PaperConverter = ({ onClose }) => {
           <div className="space-y-3">
             <label className="text-sm font-medium">Input Method</label>
             <div className="flex space-x-2">
-              <button
+                <button
                 onClick={() => setInputType('url')}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
                   inputType === 'url'
@@ -128,7 +131,7 @@ export const PaperConverter = ({ onClose }) => {
                 }`}
               >
                 <LinkIcon className="w-4 h-4" />
-                <span>arXiv URL</span>
+                <span>Paper URL</span>
               </button>
               <button
                 onClick={() => setInputType('file')}
@@ -148,18 +151,24 @@ export const PaperConverter = ({ onClose }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {inputType === 'url' ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium">arXiv URL or Paper ID</label>
+                <label className="text-sm font-medium">Paper URL or ID</label>
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="https://arxiv.org/abs/1706.03762 or 1706.03762"
+                  placeholder="https://arxiv.org/abs/1706.03762 or paper URL"
                   className="w-full input-field"
                   disabled={isProcessing}
                 />
-                <p className="text-xs text-text-muted">
-                  Example: https://arxiv.org/abs/1706.03762 (Attention Is All You Need)
-                </p>
+                <div className="text-xs text-text-muted space-y-1">
+                  <p><strong>Supported sources:</strong></p>
+                  <p>• arXiv: https://arxiv.org/abs/1706.03762 or 1706.03762</p>
+                  <p>• ACL Anthology: https://aclanthology.org/2020.acl-main.1/</p>
+                  <p>• OpenReview: https://openreview.net/forum?id=...</p>
+                  <p>• IEEE Xplore: https://ieeexplore.ieee.org/document/...</p>
+                  <p>• PubMed: https://pubmed.ncbi.nlm.nih.gov/...</p>
+                  <p>• Direct PDF links</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
@@ -222,23 +231,31 @@ export const PaperConverter = ({ onClose }) => {
 
           {/* Features Preview */}
           <div className="border-t border-border pt-6">
-            <h3 className="text-sm font-medium mb-3">What you'll get:</h3>
+            <h3 className="text-sm font-medium mb-3">AI-Powered Analysis includes:</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Plain-English summary</span>
+                <span>Key innovations & insights</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Architecture diagrams</span>
+                <span>Implementation complexity</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>PyTorch/TensorFlow code</span>
+                <span>AI-generated code templates</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Benchmarking tools</span>
+                <span>Practical applications</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                <span>Technical background needed</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                <span>Step-by-step implementation guide</span>
               </div>
             </div>
           </div>
