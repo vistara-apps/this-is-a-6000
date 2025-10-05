@@ -5,8 +5,10 @@ A modern web application that converts cutting-edge AI research papers into dige
 ## 🚀 Features
 
 ### Core Features
-- **Instant Paper Decoder**: Transform dense research papers into clear summaries with visual explanations
-- **Code Template Generator**: Generate production-ready PyTorch/TensorFlow starter code from paper methodology
+- **AI-Powered Paper Decoder**: Transform research papers from multiple sources into comprehensive analysis using GPT-4o-mini
+- **Multi-Source Paper Support**: Parse papers from arXiv, ACL Anthology, OpenReview, IEEE Xplore, PubMed, and direct PDFs
+- **Intelligent Code Generation**: Generate production-ready PyTorch/TensorFlow code templates using AI analysis
+- **Implementation Guidance**: Get complexity assessments, technical requirements, and step-by-step implementation plans
 - **Live Benchmarking Sandbox**: Automatically validate implementations against standardized datasets
 - **Architecture Decision Assistant**: Get expert-level architecture recommendations for specific use cases
 - **Paper Changelog Tracker**: Stay current with breakthrough research through AI-curated feeds
@@ -47,10 +49,12 @@ A modern web application that converts cutting-edge AI research papers into dige
 ## 🛠 Tech Stack
 
 - **Frontend**: React 18 with Vite
+- **AI Integration**: OpenRouter API with GPT-4o-mini
 - **Styling**: Tailwind CSS with custom design system
 - **Routing**: React Router v6
 - **Icons**: Lucide React
 - **State Management**: React Context API
+- **Testing**: Vitest with jsdom
 - **Build Tool**: Vite
 
 ## 🎨 Design System
@@ -74,11 +78,39 @@ A modern web application that converts cutting-edge AI research papers into dige
 - **Easing**: Custom cubic-bezier curves for natural motion
 - **Reduced Motion**: Respects accessibility preferences
 
+## 🤖 AI Paper Decoder
+
+### Supported Paper Sources
+- **arXiv**: `https://arxiv.org/abs/1706.03762` or `1706.03762`
+- **ACL Anthology**: `https://aclanthology.org/2020.acl-main.1/`
+- **OpenReview**: `https://openreview.net/forum?id=...`
+- **IEEE Xplore**: `https://ieeexplore.ieee.org/document/...`
+- **PubMed**: `https://pubmed.ncbi.nlm.nih.gov/...`
+- **Direct PDF**: Any direct PDF URL
+
+### AI Analysis Features
+- **Key Innovations**: Automatically extracted research contributions
+- **Problem Statement**: Clear explanation of the research problem
+- **Methodology**: Simplified explanation of the approach
+- **Applications**: Practical use cases and applications
+- **Implementation Complexity**: Beginner/Intermediate/Advanced rating
+- **Technical Background**: Required knowledge and skills
+- **Next Steps**: Step-by-step implementation guidance
+- **AI-Generated Code**: Production-ready PyTorch/TensorFlow templates
+
+### OpenRouter Integration
+The application uses OpenRouter's API to access GPT-4o-mini for paper analysis. To use the AI features:
+
+1. Get an API key from [OpenRouter](https://openrouter.ai/)
+2. Set the environment variable: `VITE_OPENROUTER_API_KEY=your_api_key`
+3. The app will automatically use AI analysis for all paper processing
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 16+ 
 - npm or yarn
+- OpenRouter API key (optional, for AI features)
 
 ### Installation
 
@@ -93,12 +125,17 @@ cd paperforge
 npm install
 ```
 
-3. Start the development server:
+3. (Optional) Set up environment variables:
+```bash
+echo "VITE_OPENROUTER_API_KEY=your_api_key_here" > .env
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+5. Open your browser and navigate to `http://localhost:5173`
 
 ### Building for Production
 
@@ -107,6 +144,16 @@ npm run build
 ```
 
 The built files will be in the `dist` directory.
+
+### Running Tests
+
+```bash
+# Run tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+```
 
 ## 📁 Project Structure
 

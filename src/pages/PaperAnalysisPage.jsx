@@ -179,18 +179,91 @@ export const PaperAnalysisPage = () => {
               </p>
             </div>
 
-            {/* Results */}
+            {/* Applications */}
             <div className="bg-surface border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Key Results</h2>
+              <div className="flex items-center space-x-2 mb-4">
+                <PlayCircle className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold">Potential Applications</h2>
+              </div>
               <div className="space-y-3">
-                {Object.entries(paper.extractedSummary?.results || {}).map(([metric, value]) => (
-                  <div key={metric} className="flex justify-between items-center">
-                    <span className="text-sm text-text-muted">{metric}</span>
-                    <span className="text-sm font-medium">{value}</span>
+                {paper.extractedSummary?.applications?.map((application, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
+                    <p className="text-sm leading-relaxed">{application}</p>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Technical Background */}
+            <div className="bg-surface border border-border rounded-xl p-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <BookOpen className="w-5 h-5 text-success" />
+                <h2 className="text-lg font-semibold">Technical Background Required</h2>
+              </div>
+              <div className="space-y-2">
+                {paper.extractedSummary?.technicalBackground?.map((req, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-success rounded-full flex-shrink-0" />
+                    <span className="text-sm text-text-muted">{req}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Implementation Complexity */}
+            <div className="bg-surface border border-border rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-4">Implementation Complexity</h2>
+              <div className="flex items-center space-x-3">
+                <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                  paper.extractedSummary?.complexity === 'beginner' 
+                    ? 'bg-success/20 text-success'
+                    : paper.extractedSummary?.complexity === 'intermediate'
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-error/20 text-error'
+                }`}>
+                  {paper.extractedSummary?.complexity?.toUpperCase() || 'INTERMEDIATE'}
+                </div>
+                <span className="text-sm text-text-muted">
+                  {paper.extractedSummary?.complexity === 'beginner' && 'Good for ML beginners'}
+                  {paper.extractedSummary?.complexity === 'intermediate' && 'Requires some ML experience'}
+                  {paper.extractedSummary?.complexity === 'advanced' && 'Advanced ML knowledge required'}
+                </span>
+              </div>
+            </div>
+
+            {/* Next Steps */}
+            <div className="bg-surface border border-border rounded-xl p-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <ArrowLeft className="w-5 h-5 text-primary rotate-180" />
+                <h2 className="text-lg font-semibold">Suggested Next Steps</h2>
+              </div>
+              <div className="space-y-3">
+                {paper.extractedSummary?.nextSteps?.map((step, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm leading-relaxed">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Results (if available) */}
+            {Object.keys(paper.extractedSummary?.results || {}).length > 0 && (
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <h2 className="text-lg font-semibold mb-4">Key Results</h2>
+                <div className="space-y-3">
+                  {Object.entries(paper.extractedSummary?.results || {}).map(([metric, value]) => (
+                    <div key={metric} className="flex justify-between items-center">
+                      <span className="text-sm text-text-muted">{metric}</span>
+                      <span className="text-sm font-medium">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
