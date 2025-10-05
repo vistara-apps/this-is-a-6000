@@ -17,7 +17,7 @@ export const AppProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Mock user for demo
+  // Mock user for demo - in production, this would come from authentication
   useEffect(() => {
     setUser({
       id: '1',
