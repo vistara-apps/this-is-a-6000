@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: hsl(240, 6%, 20%);
+  }
+  
+  body {
+    background-color: hsl(240, 10%, 4%);
+    color: hsl(0, 0%, 98%);
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(240, 8%, 10%);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(240, 6%, 20%);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(240, 6%, 30%);
+  }
+}
+
+@layer components {
+  .paper-card {
+    @apply bg-surface border border-border rounded-lg p-6 transition-all duration-250 hover:bg-surface-hover hover:shadow-card-hover cursor-pointer;
+  }
+  
+  .code-block {
+    @apply bg-surface border border-border rounded-md p-4 font-mono text-sm overflow-x-auto;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-primary-hover;
+  }
+  
+  .btn-secondary {
+    @apply bg-surface border border-border text-text px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-surface-hover;
+  }
+  
+  .input-field {
+    @apply bg-surface border border-border rounded-md px-3 py-2 text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+}
