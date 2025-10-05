@@ -32,7 +32,7 @@
 
 @layer components {
   .paper-card {
-    @apply bg-surface border border-border rounded-lg p-6 transition-all duration-250 hover:bg-surface-hover hover:shadow-card-hover cursor-pointer;
+    @apply bg-surface border border-border rounded-lg p-6 transition-all duration-200 hover:bg-surface-hover hover:shadow-card-hover cursor-pointer;
   }
   
   .code-block {
@@ -40,11 +40,11 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-primary-hover;
+    @apply bg-primary text-white px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-primary-hover;
   }
   
   .btn-secondary {
-    @apply bg-surface border border-border text-text px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-surface-hover;
+    @apply bg-surface border border-border text-text px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-surface-hover;
   }
   
   .input-field {

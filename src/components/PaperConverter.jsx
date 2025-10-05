@@ -14,7 +14,7 @@ import { paperService } from '../services/paperService'
 
 export const PaperConverter = ({ onClose }) => {
   const navigate = useNavigate()
-  const { user, addPaper, setError } = useApp()
+  const { user, addPaper, setError, addNotification } = useApp()
   const [inputType, setInputType] = useState('url')
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -56,6 +56,13 @@ export const PaperConverter = ({ onClose }) => {
       const paper = await paperService.processPaper(input, inputType)
       addPaper(paper)
 
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'Paper Converted Successfully!',
+        message: `"${paper.title}" has been processed and is ready for analysis.`
+      })
+
       // Navigate to paper analysis page
       navigate(`/paper/${paper.id}`)
       onClose()
@@ -79,6 +86,7 @@ export const PaperConverter = ({ onClose }) => {
           </div>
           <button
             onClick={onClose}
+            data-close-modal
             className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />

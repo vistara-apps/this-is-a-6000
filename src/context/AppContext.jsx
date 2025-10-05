@@ -16,6 +16,7 @@ export const AppProvider = ({ children }) => {
   const [collections, setCollections] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [notifications, setNotifications] = useState([])
 
   // Mock user for demo
   useEffect(() => {
@@ -50,6 +51,42 @@ export const AppProvider = ({ children }) => {
     return newCollection
   }
 
+  const addNotification = (notification) => {
+    const id = Date.now().toString()
+    const newNotification = {
+      id,
+      type: 'info',
+      ...notification,
+      timestamp: new Date().toISOString()
+    }
+    setNotifications(prev => [newNotification, ...prev])
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      removeNotification(id)
+    }, 5000)
+    
+    return id
+  }
+
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id))
+  }
+
+  const clearError = () => {
+    setError(null)
+  }
+
+  // Clear error after 10 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError()
+      }, 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const value = {
     user,
     setUser,
@@ -61,6 +98,10 @@ export const AppProvider = ({ children }) => {
     setIsLoading,
     error,
     setError,
+    clearError,
+    notifications,
+    addNotification,
+    removeNotification,
     addPaper,
     updatePaper,
     createCollection
