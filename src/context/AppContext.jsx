@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useToast } from '../components/Toast'
 
 const AppContext = createContext()
 
@@ -16,6 +17,7 @@ export const AppProvider = ({ children }) => {
   const [collections, setCollections] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const toast = useToast()
 
   // Mock user for demo
   useEffect(() => {
@@ -63,12 +65,14 @@ export const AppProvider = ({ children }) => {
     setError,
     addPaper,
     updatePaper,
-    createCollection
+    createCollection,
+    toast
   }
 
   return (
     <AppContext.Provider value={value}>
       {children}
+      <toast.ToastContainer />
     </AppContext.Provider>
   )
 }

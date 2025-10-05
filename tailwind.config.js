@@ -42,6 +42,8 @@ export default {
       animation: {
         'slide-in': 'slideIn 400ms cubic-bezier(0.22, 1, 0.36, 1)',
         'fade-in': 'fadeIn 250ms ease',
+        'slide-up': 'slideUp 300ms ease-out',
+        'bounce-gentle': 'bounce 1s ease-in-out',
       },
       keyframes: {
         slideIn: {
@@ -51,6 +53,16 @@ export default {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        bounce: {
+          '0%, 20%, 53%, 80%, 100%': { transform: 'translateY(0)' },
+          '40%, 43%': { transform: 'translateY(-30px)' },
+          '70%': { transform: 'translateY(-15px)' },
+          '90%': { transform: 'translateY(-4px)' },
         },
       },
     },

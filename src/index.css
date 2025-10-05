@@ -10,6 +10,10 @@
   body {
     background-color: hsl(240, 10%, 4%);
     color: hsl(0, 0%, 98%);
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   ::-webkit-scrollbar {
@@ -32,7 +36,7 @@
 
 @layer components {
   .paper-card {
-    @apply bg-surface border border-border rounded-lg p-6 transition-all duration-250 hover:bg-surface-hover hover:shadow-card-hover cursor-pointer;
+    @apply bg-surface border border-border rounded-lg p-6 transition-all duration-300 hover:bg-surface-hover hover:shadow-card-hover hover:border-primary/20 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98];
   }
   
   .code-block {
@@ -40,14 +44,51 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-primary-hover;
+    @apply bg-primary text-white px-4 py-2 rounded-md font-medium transition-all duration-200 hover:bg-primary-hover hover:shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-bg;
   }
   
   .btn-secondary {
-    @apply bg-surface border border-border text-text px-4 py-2 rounded-md font-medium transition-colors duration-250 hover:bg-surface-hover;
+    @apply bg-surface border border-border text-text px-4 py-2 rounded-md font-medium transition-all duration-200 hover:bg-surface-hover hover:border-primary/30 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-bg;
   }
   
   .input-field {
-    @apply bg-surface border border-border rounded-md px-3 py-2 text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+    @apply bg-surface border border-border rounded-md px-3 py-2 text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 hover:border-primary/30;
+  }
+  
+  .loading-skeleton {
+    @apply animate-pulse bg-surface-hover rounded;
+  }
+  
+  .fade-in {
+    @apply animate-fade-in;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-surface/80 border border-border/50;
+  }
+  
+  /* Accessibility improvements */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+  }
+  
+  /* Focus visible improvements */
+  .focus-visible {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

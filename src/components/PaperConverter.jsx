@@ -14,7 +14,7 @@ import { paperService } from '../services/paperService'
 
 export const PaperConverter = ({ onClose }) => {
   const navigate = useNavigate()
-  const { user, addPaper, setError } = useApp()
+  const { user, addPaper, toast } = useApp()
   const [inputType, setInputType] = useState('url')
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -26,17 +26,16 @@ export const PaperConverter = ({ onClose }) => {
     e.preventDefault()
     
     if (!canConvert) {
-      setError('Monthly conversion limit reached. Please upgrade to continue.')
+      toast.error('Monthly conversion limit reached. Please upgrade to continue.')
       return
     }
 
     if (!input.trim()) {
-      setError('Please provide a paper URL or upload a file')
+      toast.error('Please provide a paper URL or upload a file')
       return
     }
 
     setIsProcessing(true)
-    setError(null)
 
     try {
       // Simulate processing steps
@@ -56,11 +55,13 @@ export const PaperConverter = ({ onClose }) => {
       const paper = await paperService.processPaper(input, inputType)
       addPaper(paper)
 
+      toast.success('Paper converted successfully! 🎉')
+      
       // Navigate to paper analysis page
       navigate(`/paper/${paper.id}`)
       onClose()
     } catch (error) {
-      setError(error.message)
+      toast.error(`Failed to process paper: ${error.message}`)
     } finally {
       setIsProcessing(false)
       setProcessingStep('')
@@ -68,8 +69,8 @@ export const PaperConverter = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-surface border border-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-surface border border-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
         <div className="p-6 border-b border-border flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-xl font-bold">Convert Research Paper</h2>
@@ -182,16 +183,19 @@ export const PaperConverter = ({ onClose }) => {
 
             {/* Processing Status */}
             {isProcessing && (
-              <div className="bg-bg border border-border rounded-lg p-4">
+              <div className="bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 rounded-lg p-4 animate-pulse">
                 <div className="flex items-center space-x-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <div className="relative">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <div className="absolute inset-0 w-5 h-5 border-2 border-primary/20 rounded-full animate-ping" />
+                  </div>
                   <div>
-                    <div className="text-sm font-medium">Processing Paper</div>
+                    <div className="text-sm font-medium text-primary">Processing Paper</div>
                     <div className="text-xs text-text-muted">{processingStep}</div>
                   </div>
                 </div>
-                <div className="mt-3 w-full bg-surface-hover rounded-full h-1">
-                  <div className="bg-primary h-1 rounded-full animate-pulse" style={{ width: '60%' }} />
+                <div className="mt-3 w-full bg-surface-hover rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-primary to-accent h-2 rounded-full animate-pulse transition-all duration-1000" style={{ width: '60%' }} />
                 </div>
               </div>
             )}
