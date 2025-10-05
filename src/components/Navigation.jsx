@@ -27,15 +27,15 @@ export const Navigation = () => {
   const isActive = (path) => location.pathname === path
 
   return (
-    <nav className="border-b border-border bg-surface/50 backdrop-blur-sm sticky top-0 z-50">
+    <nav className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-md flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <Zap className="w-5 h-5 text-white group-hover:animate-bounce" />
             </div>
-            <span className="text-xl font-bold">PaperForge</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-text to-primary bg-clip-text text-transparent">PaperForge</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -87,7 +87,7 @@ export const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border">
+          <div className="md:hidden border-t border-border animate-slide-in">
             <div className="py-4 space-y-2">
               {navItems.map(({ path, label, icon: Icon }) => (
                 <Link

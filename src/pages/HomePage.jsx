@@ -72,11 +72,17 @@ export const HomePage = () => {
   return (
     <div className="py-8 space-y-16">
       {/* Hero Section */}
-      <section className="text-center space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+      <section className="text-center space-y-8 fade-in">
+        <div className="space-y-6">
+          <div className="inline-flex items-center px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary mb-4 animate-bounce-gentle">
+            <Zap className="w-4 h-4 mr-2" />
+            Transform AI Research in Minutes
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             Transform Research Papers into
-            <span className="text-primary block mt-2">Production-Ready Code</span>
+            <span className="text-primary block mt-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Production-Ready Code
+            </span>
           </h1>
           <p className="text-xl text-text-muted max-w-3xl mx-auto leading-relaxed">
             Stop spending weeks deciphering academic jargon. Get structured summaries, 
@@ -85,20 +91,24 @@ export const HomePage = () => {
         </div>
 
         {/* Paper Input */}
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-surface border border-border rounded-xl p-6">
+        <div className="max-w-2xl mx-auto slide-up">
+          <div className="glass-effect rounded-xl p-6 shadow-xl">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2 text-sm text-text-muted">
-                <Zap className="w-4 h-4" />
+              <div className="flex items-center justify-center space-x-2 text-sm text-text-muted">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{animationDelay: '0.2s'}} />
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse" style={{animationDelay: '0.4s'}} />
+                </div>
                 <span>Paste arXiv URL or upload PDF to get started</span>
               </div>
               <button
                 onClick={() => setShowConverter(true)}
-                className="w-full bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-hover transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-primary to-accent text-white py-4 px-6 rounded-lg font-medium hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 group"
               >
-                <FileText className="w-5 h-5" />
+                <FileText className="w-5 h-5 group-hover:animate-bounce" />
                 <span>Convert Your First Paper</span>
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               {user && (
                 <div className="text-sm text-text-muted">
@@ -111,16 +121,25 @@ export const HomePage = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="bg-surface border border-border rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-primary">5 min</div>
+          <div className="bg-surface border border-border rounded-lg p-6 text-center hover:bg-surface-hover transition-all duration-300 hover:scale-105 group">
+            <div className="flex items-center justify-center mb-2">
+              <Clock className="w-6 h-6 text-primary group-hover:animate-spin" />
+            </div>
+            <div className="text-3xl font-bold text-primary mb-1">5 min</div>
             <div className="text-sm text-text-muted">Average conversion time</div>
           </div>
-          <div className="bg-surface border border-border rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-success">92%</div>
+          <div className="bg-surface border border-border rounded-lg p-6 text-center hover:bg-surface-hover transition-all duration-300 hover:scale-105 group">
+            <div className="flex items-center justify-center mb-2">
+              <CheckCircle className="w-6 h-6 text-success group-hover:animate-bounce" />
+            </div>
+            <div className="text-3xl font-bold text-success mb-1">92%</div>
             <div className="text-sm text-text-muted">Reproducibility score</div>
           </div>
-          <div className="bg-surface border border-border rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-accent">10k+</div>
+          <div className="bg-surface border border-border rounded-lg p-6 text-center hover:bg-surface-hover transition-all duration-300 hover:scale-105 group">
+            <div className="flex items-center justify-center mb-2">
+              <TrendingUp className="w-6 h-6 text-accent group-hover:animate-pulse" />
+            </div>
+            <div className="text-3xl font-bold text-accent mb-1">10k+</div>
             <div className="text-sm text-text-muted">Papers converted</div>
           </div>
         </div>
@@ -137,7 +156,9 @@ export const HomePage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} />
+            <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+              <FeatureCard {...feature} />
+            </div>
           ))}
         </div>
       </section>
