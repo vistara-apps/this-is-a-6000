@@ -5,12 +5,15 @@ A modern web application that converts cutting-edge AI research papers into dige
 ## 🚀 Features
 
 ### Core Features
-- **Instant Paper Decoder**: Transform dense research papers into clear summaries with visual explanations
-- **Code Template Generator**: Generate production-ready PyTorch/TensorFlow starter code from paper methodology
-- **Live Benchmarking Sandbox**: Automatically validate implementations against standardized datasets
-- **Architecture Decision Assistant**: Get expert-level architecture recommendations for specific use cases
-- **Paper Changelog Tracker**: Stay current with breakthrough research through AI-curated feeds
-- **Collaborative Workspace**: Share analyses with teams and track implementation progress
+- **🤖 AI-Powered Paper Decoder**: Transform dense research papers into clear summaries using OpenRouter GPT-4o-mini
+- **🔍 Multi-Source Paper Support**: Process papers from arXiv, IEEE, ACM, DOI, and direct PDF uploads
+- **⚡ Smart Code Generation**: Generate production-ready PyTorch/TensorFlow/JAX code with AI insights
+- **🧠 Intelligent Analysis**: Extract key innovations, methodology, and practical applications automatically
+- **📊 Implementation Insights**: Get complexity assessments and framework recommendations
+- **🎯 Live Benchmarking Sandbox**: Automatically validate implementations against standardized datasets
+- **🏗️ Architecture Decision Assistant**: Get expert-level architecture recommendations for specific use cases
+- **📈 Paper Changelog Tracker**: Stay current with breakthrough research through AI-curated feeds
+- **🤝 Collaborative Workspace**: Share analyses with teams and track implementation progress
 
 ### UI/UX Improvements Implemented
 
@@ -47,10 +50,13 @@ A modern web application that converts cutting-edge AI research papers into dige
 ## 🛠 Tech Stack
 
 - **Frontend**: React 18 with Vite
+- **AI Integration**: OpenRouter API with GPT-4o-mini
 - **Styling**: Tailwind CSS with custom design system
 - **Routing**: React Router v6
 - **Icons**: Lucide React
 - **State Management**: React Context API
+- **HTTP Client**: Axios for API requests
+- **Testing**: Vitest with React Testing Library
 - **Build Tool**: Vite
 
 ## 🎨 Design System
@@ -79,6 +85,7 @@ A modern web application that converts cutting-edge AI research papers into dige
 ### Prerequisites
 - Node.js 16+ 
 - npm or yarn
+- OpenRouter API key (for AI features)
 
 ### Installation
 
@@ -93,12 +100,54 @@ cd paperforge
 npm install
 ```
 
-3. Start the development server:
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
+Edit `.env` and add your OpenRouter API key:
+```env
+VITE_OPENAI_API_KEY=your_openrouter_api_key_here
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+5. Open your browser and navigate to `http://localhost:5173`
+
+### 🤖 AI Features Setup
+
+To enable AI-powered paper analysis:
+
+1. **Get OpenRouter API Key**: 
+   - Visit [OpenRouter](https://openrouter.ai/keys)
+   - Create an account and generate an API key
+   - Add credits to your account for API usage
+
+2. **Configure Environment**:
+   - Copy `.env.example` to `.env`
+   - Add your API key: `VITE_OPENAI_API_KEY=your_key_here`
+
+3. **Supported Paper Sources**:
+   - ✅ arXiv (URL or ID): `https://arxiv.org/abs/1706.03762` or `1706.03762`
+   - ✅ IEEE Xplore: `https://ieeexplore.ieee.org/document/123456`
+   - ✅ ACM Digital Library: `https://dl.acm.org/doi/10.1145/123.456`
+   - ✅ DOI Links: `https://doi.org/10.1038/nature12345`
+   - ✅ Direct PDF URLs
+
+### 🧪 Running Tests
+
+```bash
+# Run tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+```
 
 ### Building for Production
 

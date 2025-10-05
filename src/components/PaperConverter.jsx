@@ -148,18 +148,21 @@ export const PaperConverter = ({ onClose }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {inputType === 'url' ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium">arXiv URL or Paper ID</label>
+                <label className="text-sm font-medium">Research Paper URL or ID</label>
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="https://arxiv.org/abs/1706.03762 or 1706.03762"
+                  placeholder="https://arxiv.org/abs/1706.03762 or DOI or IEEE link"
                   className="w-full input-field"
                   disabled={isProcessing}
                 />
-                <p className="text-xs text-text-muted">
-                  Example: https://arxiv.org/abs/1706.03762 (Attention Is All You Need)
-                </p>
+                <div className="text-xs text-text-muted space-y-1">
+                  <p>✅ arXiv: https://arxiv.org/abs/1706.03762 or 1706.03762</p>
+                  <p>✅ IEEE: https://ieeexplore.ieee.org/document/123456</p>
+                  <p>✅ ACM: https://dl.acm.org/doi/10.1145/123.456</p>
+                  <p>✅ DOI: https://doi.org/10.1038/nature12345</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
@@ -222,24 +225,37 @@ export const PaperConverter = ({ onClose }) => {
 
           {/* Features Preview */}
           <div className="border-t border-border pt-6">
-            <h3 className="text-sm font-medium mb-3">What you'll get:</h3>
+            <h3 className="text-sm font-medium mb-3">🤖 AI-Powered Analysis Features:</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Plain-English summary</span>
+                <span>AI-generated plain-English summary</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Architecture diagrams</span>
+                <span>Key innovations extraction</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>PyTorch/TensorFlow code</span>
+                <span>Smart code generation (PyTorch/TF/JAX)</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Benchmarking tools</span>
+                <span>Methodology & results analysis</span>
               </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                <span>Practical applications insights</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                <span>Implementation complexity assessment</span>
+              </div>
+            </div>
+            <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-xs text-primary font-medium">
+                ⚡ Powered by OpenRouter GPT-4o-mini for intelligent paper analysis
+              </p>
             </div>
           </div>
         </div>

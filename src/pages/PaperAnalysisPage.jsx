@@ -146,75 +146,226 @@ export const PaperAnalysisPage = () => {
       {/* Tab Content */}
       <div className="space-y-6">
         {activeTab === 'summary' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Key Innovations */}
-            <div className="bg-surface border border-border rounded-xl p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Lightbulb className="w-5 h-5 text-warning" />
-                <h2 className="text-lg font-semibold">Key Innovations</h2>
+          <div className="space-y-6">
+            {/* AI Summary Badge */}
+            {paper.aiPowered && (
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-xl p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-primary">AI-Powered Analysis</span>
+                </div>
+                <p className="text-sm text-text-muted">
+                  {paper.extractedSummary?.tldr || 'This analysis was generated using advanced AI to extract key insights from the research paper.'}
+                </p>
               </div>
-              <div className="space-y-3">
-                {paper.extractedSummary?.keyInnovations?.map((innovation, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm leading-relaxed">{innovation}</p>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Key Innovations */}
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Lightbulb className="w-5 h-5 text-warning" />
+                  <h2 className="text-lg font-semibold">Key Innovations</h2>
+                  {paper.aiPowered && <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>}
+                </div>
+                <div className="space-y-3">
+                  {paper.extractedSummary?.keyInnovations?.map((innovation, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                      <p className="text-sm leading-relaxed">{innovation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Problem Statement */}
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <h2 className="text-lg font-semibold">Problem Statement</h2>
+                  {paper.aiPowered && <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>}
+                </div>
+                <p className="text-text-muted leading-relaxed text-sm">
+                  {paper.extractedSummary?.problemStatement}
+                </p>
+              </div>
+
+              {/* Methodology */}
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <h2 className="text-lg font-semibold">Methodology</h2>
+                  {paper.aiPowered && <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>}
+                </div>
+                <p className="text-text-muted leading-relaxed text-sm">
+                  {paper.extractedSummary?.methodology}
+                </p>
+              </div>
+
+              {/* Results */}
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <h2 className="text-lg font-semibold">Key Results</h2>
+                  {paper.aiPowered && <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>}
+                </div>
+                <div className="space-y-3">
+                  {Object.entries(paper.extractedSummary?.results || {}).map(([metric, value]) => (
+                    <div key={metric} className="flex justify-between items-center">
+                      <span className="text-sm text-text-muted">{metric}</span>
+                      <span className="text-sm font-medium">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional AI Insights */}
+            {paper.extractedSummary?.applications && paper.extractedSummary.applications.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Practical Applications */}
+                <div className="bg-surface border border-border rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <PlayCircle className="w-5 h-5 text-accent" />
+                    <h2 className="text-lg font-semibold">Practical Applications</h2>
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Problem Statement */}
-            <div className="bg-surface border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Problem Statement</h2>
-              <p className="text-text-muted leading-relaxed text-sm">
-                {paper.extractedSummary?.problemStatement}
-              </p>
-            </div>
-
-            {/* Methodology */}
-            <div className="bg-surface border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Methodology</h2>
-              <p className="text-text-muted leading-relaxed text-sm">
-                {paper.extractedSummary?.methodology}
-              </p>
-            </div>
-
-            {/* Results */}
-            <div className="bg-surface border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Key Results</h2>
-              <div className="space-y-3">
-                {Object.entries(paper.extractedSummary?.results || {}).map(([metric, value]) => (
-                  <div key={metric} className="flex justify-between items-center">
-                    <span className="text-sm text-text-muted">{metric}</span>
-                    <span className="text-sm font-medium">{value}</span>
+                  <div className="space-y-3">
+                    {paper.extractedSummary.applications.map((app, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
+                        <p className="text-sm leading-relaxed">{app}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Implementation Complexity */}
+                <div className="bg-surface border border-border rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <BarChart3 className="w-5 h-5 text-success" />
+                    <h2 className="text-lg font-semibold">Implementation Insights</h2>
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-text-muted">Complexity Level</span>
+                      <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                        paper.extractedSummary.complexity === 'beginner' ? 'bg-success/20 text-success' :
+                        paper.extractedSummary.complexity === 'intermediate' ? 'bg-warning/20 text-warning' :
+                        'bg-error/20 text-error'
+                      }`}>
+                        {paper.extractedSummary.complexity || 'intermediate'}
+                      </span>
+                    </div>
+                    {paper.extractedSummary.codeInsights && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-text-muted">Recommended Framework</span>
+                          <span className="text-sm font-medium">
+                            {paper.extractedSummary.codeInsights.recommendedFramework || 'PyTorch'}
+                          </span>
+                        </div>
+                        {paper.extractedSummary.codeInsights.algorithms && paper.extractedSummary.codeInsights.algorithms.length > 0 && (
+                          <div>
+                            <span className="text-sm text-text-muted block mb-2">Key Algorithms</span>
+                            <div className="flex flex-wrap gap-1">
+                              {paper.extractedSummary.codeInsights.algorithms.slice(0, 3).map((algo, index) => (
+                                <span key={index} className="text-xs bg-surface-hover px-2 py-1 rounded">
+                                  {algo}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {activeTab === 'code' && (
           <div className="space-y-6">
-            {/* Framework Selector */}
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium">Framework:</span>
-              <div className="flex space-x-2">
-                {['pytorch', 'tensorflow', 'jax'].map((framework) => (
-                  <button
-                    key={framework}
-                    onClick={() => setSelectedFramework(framework)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                      selectedFramework === framework
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border hover:bg-surface-hover'
-                    }`}
-                  >
-                    {framework.charAt(0).toUpperCase() + framework.slice(1)}
-                  </button>
-                ))}
+            {/* AI Code Generation Badge */}
+            {paper.aiPowered && (
+              <div className="bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20 rounded-xl p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Code className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-medium text-accent">AI-Generated Code Templates</span>
+                </div>
+                <p className="text-sm text-text-muted">
+                  {paper.extractedSummary?.codeInsights?.codeStructure || 'Production-ready code templates generated based on the paper\'s methodology and best practices.'}
+                </p>
               </div>
+            )}
+
+            {/* Framework Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium">Framework:</span>
+                <div className="flex space-x-2">
+                  {['pytorch', 'tensorflow', 'jax'].map((framework) => (
+                    <button
+                      key={framework}
+                      onClick={() => setSelectedFramework(framework)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                        selectedFramework === framework
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:bg-surface-hover'
+                      }`}
+                    >
+                      {framework.charAt(0).toUpperCase() + framework.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Code Insights */}
+              {paper.extractedSummary?.codeInsights?.recommendedFramework && (
+                <div className="text-sm text-text-muted">
+                  <span className="font-medium">AI Recommended:</span> {paper.extractedSummary.codeInsights.recommendedFramework}
+                </div>
+              )}
             </div>
+
+            {/* Dependencies & Algorithms Info */}
+            {paper.codeTemplates?.find(t => t.framework === selectedFramework) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Dependencies */}
+                {paper.codeTemplates.find(t => t.framework === selectedFramework).dependencies?.length > 0 && (
+                  <div className="bg-surface border border-border rounded-lg p-4">
+                    <h3 className="text-sm font-medium mb-2 flex items-center space-x-2">
+                      <span>Dependencies</span>
+                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>
+                    </h3>
+                    <div className="flex flex-wrap gap-1">
+                      {paper.codeTemplates.find(t => t.framework === selectedFramework).dependencies.map((dep, index) => (
+                        <span key={index} className="text-xs bg-surface-hover px-2 py-1 rounded">
+                          {dep}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Algorithms */}
+                {paper.codeTemplates.find(t => t.framework === selectedFramework).algorithms?.length > 0 && (
+                  <div className="bg-surface border border-border rounded-lg p-4">
+                    <h3 className="text-sm font-medium mb-2 flex items-center space-x-2">
+                      <span>Key Algorithms</span>
+                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI</span>
+                    </h3>
+                    <div className="flex flex-wrap gap-1">
+                      {paper.codeTemplates.find(t => t.framework === selectedFramework).algorithms.map((algo, index) => (
+                        <span key={index} className="text-xs bg-surface-hover px-2 py-1 rounded">
+                          {algo}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Code Template */}
             <CodeViewer 
