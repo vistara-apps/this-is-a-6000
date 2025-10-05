@@ -32,6 +32,11 @@ export const AppProvider = ({ children }) => {
 
   const addPaper = (paper) => {
     setPapers(prev => [paper, ...prev])
+    // Update user's conversion count
+    setUser(prev => prev ? {
+      ...prev,
+      monthlyConversionsUsed: prev.monthlyConversionsUsed + 1
+    } : prev)
   }
 
   const updatePaper = (id, updates) => {

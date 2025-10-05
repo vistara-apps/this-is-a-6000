@@ -163,13 +163,17 @@ export const PaperConverter = ({ onClose }) => {
             ) : (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Upload PDF</label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <div 
+                  className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('file-upload').click()}
+                >
                   <Upload className="w-8 h-8 text-text-muted mx-auto mb-2" />
                   <p className="text-sm text-text-muted mb-2">
-                    Click to upload or drag and drop
+                    {input ? `Selected: ${input}` : 'Click to upload or drag and drop'}
                   </p>
                   <p className="text-xs text-text-muted">PDF files up to 10MB</p>
                   <input
+                    id="file-upload"
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setInput(e.target.files[0]?.name || '')}

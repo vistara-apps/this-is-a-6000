@@ -27,6 +27,36 @@ const mockPapers = {
     primaryCategory: 'cs.CV',
     citations: 12000,
     pdfUrl: 'https://arxiv.org/pdf/2010.11929.pdf'
+  },
+  '1512.03385': {
+    arxivId: '1512.03385',
+    title: 'Deep Residual Learning for Image Recognition',
+    authors: ['Kaiming He', 'Xiangyu Zhang', 'Shaoqing Ren', 'Jian Sun'],
+    abstract: 'Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously. We explicitly reformulate the layers as learning residual functions with reference to the layer inputs, instead of learning unreferenced functions.',
+    publishedDate: '2015-12-10',
+    primaryCategory: 'cs.CV',
+    citations: 89000,
+    pdfUrl: 'https://arxiv.org/pdf/1512.03385.pdf'
+  },
+  '1406.2661': {
+    arxivId: '1406.2661',
+    title: 'Generative Adversarial Networks',
+    authors: ['Ian J. Goodfellow', 'Jean Pouget-Abadie', 'Mehdi Mirza', 'Bing Xu', 'David Warde-Farley', 'Sherjil Ozair', 'Aaron Courville', 'Yoshua Bengio'],
+    abstract: 'We propose a new framework for estimating generative models via an adversarial process, in which we simultaneously train two models: a generative model G that captures the data distribution, and a discriminative model D that estimates the probability that a sample came from the training data rather than G.',
+    publishedDate: '2014-06-10',
+    primaryCategory: 'stat.ML',
+    citations: 45000,
+    pdfUrl: 'https://arxiv.org/pdf/1406.2661.pdf'
+  },
+  '2005.14165': {
+    arxivId: '2005.14165',
+    title: 'Language Models are Few-Shot Learners',
+    authors: ['Tom B. Brown', 'Benjamin Mann', 'Nick Ryder', 'Melanie Subbiah', 'Jared Kaplan', 'Prafulla Dhariwal'],
+    abstract: 'Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task. While typically task-agnostic in architecture, this method still requires task-specific fine-tuning datasets of thousands or tens of thousands of examples.',
+    publishedDate: '2020-05-28',
+    primaryCategory: 'cs.CL',
+    citations: 25000,
+    pdfUrl: 'https://arxiv.org/pdf/2005.14165.pdf'
   }
 }
 
@@ -249,10 +279,11 @@ if __name__ == "__main__":
 
 export const paperService = {
   async processPaper(input, inputType) {
-    const arxivId = extractArxivId(input)
-    
-    if (arxivId && mockPapers[arxivId]) {
-      const paperData = mockPapers[arxivId]
+    try {
+      const arxivId = extractArxivId(input)
+      
+      if (arxivId && mockPapers[arxivId]) {
+        const paperData = mockPapers[arxivId]
       
       // Generate analysis
       const analysis = {
@@ -321,6 +352,10 @@ export const paperService = {
       architectureDiagram: '/api/placeholder/600/400',
       benchmarkResults: [],
       createdAt: new Date().toISOString()
+    }
+    } catch (error) {
+      console.error('Error processing paper:', error)
+      throw new Error('Failed to process paper. Please try again.')
     }
   },
   
