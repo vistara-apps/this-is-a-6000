@@ -25,14 +25,16 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const initializeUser = async () => {
       try {
-        // Check if user is authenticated
-        const { data: { user: authUser }, error } = await supabase.auth.getUser()
-        
-        if (error) {
-          console.error('Auth error:', error)
-          // Fall back to demo user for development
-          setDemoUser()
-          return
+        // Check if user is authenticated - handle potential AuthSessionMissingError
+        let authUser = null
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser()
+          if (!error && user) {
+            authUser = user
+          }
+        } catch (authError) {
+          console.log('No active auth session, using demo mode:', authError.message)
+          // Don't throw error, just continue with demo user
         }
 
         if (authUser) {
