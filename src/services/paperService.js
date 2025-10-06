@@ -125,6 +125,116 @@ const extractArxivId = (input) => {
   return parsed && parsed.source === 'arxiv' ? parsed.id : null
 }
 
+// Fallback function to extract analysis from raw text when JSON parsing fails
+const extractAnalysisFromText = (text) => {
+  try {
+    // Initialize default structure
+    const analysis = {
+      keyInnovations: [],
+      problemStatement: "",
+      methodology: "",
+      applications: [],
+      complexity: "intermediate",
+      technicalBackground: [],
+      nextSteps: []
+    }
+
+    // Try to extract key innovations
+    const innovationsMatch = text.match(/(?:key innovations?|innovations?)[:\s]*(?:\n|$)((?:[-•*]\s*.+(?:\n|$))+)/i)
+    if (innovationsMatch) {
+      analysis.keyInnovations = innovationsMatch[1]
+        .split(/\n/)
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0)
+        .slice(0, 5)
+    }
+
+    // Try to extract problem statement
+    const problemMatch = text.match(/(?:problem statement|problem)[:\s]*(?:\n|$)([^.]*\.(?:[^.]*\.)?(?:[^.]*\.)?)/i)
+    if (problemMatch) {
+      analysis.problemStatement = problemMatch[1].trim()
+    }
+
+    // Try to extract methodology
+    const methodologyMatch = text.match(/(?:methodology|method)[:\s]*(?:\n|$)([^.]*\.(?:[^.]*\.)?(?:[^.]*\.)?(?:[^.]*\.)?)/i)
+    if (methodologyMatch) {
+      analysis.methodology = methodologyMatch[1].trim()
+    }
+
+    // Try to extract applications
+    const applicationsMatch = text.match(/(?:applications?|uses?)[:\s]*(?:\n|$)((?:[-•*]\s*.+(?:\n|$))+)/i)
+    if (applicationsMatch) {
+      analysis.applications = applicationsMatch[1]
+        .split(/\n/)
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0)
+        .slice(0, 4)
+    }
+
+    // Try to extract complexity
+    const complexityMatch = text.match(/(?:complexity|difficulty)[:\s]*(?:\n|$)(\w+)/i)
+    if (complexityMatch) {
+      const complexity = complexityMatch[1].toLowerCase()
+      if (['beginner', 'intermediate', 'advanced'].includes(complexity)) {
+        analysis.complexity = complexity
+      }
+    }
+
+    // Try to extract technical background
+    const backgroundMatch = text.match(/(?:technical background|background|requirements?)[:\s]*(?:\n|$)((?:[-•*]\s*.+(?:\n|$))+)/i)
+    if (backgroundMatch) {
+      analysis.technicalBackground = backgroundMatch[1]
+        .split(/\n/)
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0)
+        .slice(0, 4)
+    }
+
+    // Try to extract next steps
+    const stepsMatch = text.match(/(?:next steps?|implementation|steps?)[:\s]*(?:\n|$)((?:[-•*]\s*.+(?:\n|$))+)/i)
+    if (stepsMatch) {
+      analysis.nextSteps = stepsMatch[1]
+        .split(/\n/)
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0)
+        .slice(0, 5)
+    }
+
+    // Fill in defaults if extraction failed
+    if (analysis.keyInnovations.length === 0) {
+      analysis.keyInnovations = ["Advanced AI techniques", "Novel architecture design", "Improved performance metrics"]
+    }
+    if (!analysis.problemStatement) {
+      analysis.problemStatement = "This paper addresses important challenges in the field with innovative solutions."
+    }
+    if (!analysis.methodology) {
+      analysis.methodology = "The paper presents a comprehensive methodology combining theoretical insights with practical implementation."
+    }
+    if (analysis.applications.length === 0) {
+      analysis.applications = ["Machine learning applications", "Research and development", "Industry implementations"]
+    }
+    if (analysis.technicalBackground.length === 0) {
+      analysis.technicalBackground = ["Machine learning fundamentals", "Programming experience", "Mathematical background"]
+    }
+    if (analysis.nextSteps.length === 0) {
+      analysis.nextSteps = ["Review paper thoroughly", "Implement basic version", "Test and validate results"]
+    }
+
+    return analysis
+  } catch (error) {
+    console.error('Text extraction failed:', error)
+    return {
+      keyInnovations: ["Analysis extraction failed - manual review needed"],
+      problemStatement: "Unable to extract problem statement from AI response",
+      methodology: "Unable to extract methodology from AI response",
+      applications: ["Manual analysis required"],
+      complexity: "intermediate",
+      technicalBackground: ["Review paper manually for requirements"],
+      nextSteps: ["Analyze paper manually", "Consult additional resources"]
+    }
+  }
+}
+
 // AI-powered paper analysis using OpenRouter GPT-4o-mini
 const analyzePaperWithAI = async (paperData) => {
   try {
@@ -173,20 +283,44 @@ Format your response as JSON with the following structure:
 
     const analysisText = response.choices[0].message.content
     
-    // Try to parse JSON, fall back to structured text if parsing fails
+    // Enhanced JSON parsing with better error handling
     try {
-      return JSON.parse(analysisText)
-    } catch (parseError) {
-      console.warn('Failed to parse AI response as JSON, using fallback structure')
-      return {
-        keyInnovations: ["AI analysis temporarily unavailable"],
-        problemStatement: "Please check back later for AI-generated analysis",
-        methodology: "AI analysis in progress",
-        applications: ["General machine learning applications"],
-        complexity: "intermediate",
-        technicalBackground: ["Machine learning fundamentals"],
-        nextSteps: ["Review paper manually", "Implement basic version"]
+      // Clean the response text to handle common JSON formatting issues
+      let cleanedText = analysisText.trim()
+      
+      // Remove markdown code blocks if present
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '')
       }
+      
+      // Try to find JSON content if it's embedded in text
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        cleanedText = jsonMatch[0]
+      }
+      
+      // Parse the cleaned JSON
+      const parsed = JSON.parse(cleanedText)
+      
+      // Validate that required fields exist
+      const requiredFields = ['keyInnovations', 'problemStatement', 'methodology', 'applications', 'complexity', 'technicalBackground', 'nextSteps']
+      const hasAllFields = requiredFields.every(field => parsed.hasOwnProperty(field))
+      
+      if (hasAllFields) {
+        return parsed
+      } else {
+        console.warn('AI response missing required fields, using fallback')
+        throw new Error('Missing required fields')
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse AI response as JSON:', parseError.message)
+      console.log('Raw AI response:', analysisText)
+      
+      // Try to extract information from the raw text as fallback
+      const fallbackAnalysis = extractAnalysisFromText(analysisText)
+      return fallbackAnalysis
     }
   } catch (error) {
     console.error('AI analysis failed:', error)

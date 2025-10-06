@@ -4,25 +4,26 @@ import { Check, Crown, Zap, Users, X } from 'lucide-react'
 export const PricingPage = () => {
   const plans = [
     {
-      name: 'Free',
+      name: 'Pay-per-Use',
       price: '$0',
-      period: 'forever',
-      description: 'Perfect for trying out PaperForge',
+      period: 'to start',
+      description: 'Perfect for trying out PaperForge with x402 payments',
       features: [
-        '3 paper conversions per month',
-        'Basic summaries and code templates',
-        'Community support',
-        'Export to PDF'
+        '1 FREE paper conversion',
+        '$5 per additional paper',
+        'Full AI-powered analysis',
+        'Code templates for PyTorch & TensorFlow',
+        'Architecture recommendations',
+        'Export to multiple formats'
       ],
       limitations: [
-        'No benchmarking features',
-        'No collaboration tools',
-        'No API access',
-        'Limited architecture recommendations'
+        'No monthly subscription',
+        'Pay only for what you use',
+        'No upfront commitment'
       ],
-      cta: 'Get Started',
-      popular: false,
-      color: 'bg-surface border-border'
+      cta: 'Start Free',
+      popular: true,
+      color: 'bg-primary/10 border-primary'
     },
     {
       name: 'Pro',
@@ -30,7 +31,7 @@ export const PricingPage = () => {
       period: 'per month',
       description: 'For serious ML engineers and researchers',
       features: [
-        '50 paper conversions per month',
+        'Unlimited paper conversions',
         'Full benchmarking suite',
         'Architecture decision assistant',
         'Priority support',
@@ -43,8 +44,8 @@ export const PricingPage = () => {
         'No API access'
       ],
       cta: 'Start Pro Trial',
-      popular: true,
-      color: 'bg-primary/10 border-primary'
+      popular: false,
+      color: 'bg-surface border-border'
     },
     {
       name: 'Team',

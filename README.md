@@ -2,6 +2,35 @@
 
 A modern web application that converts cutting-edge AI research papers into digestible summaries, starter code templates, and benchmarking tools for ML engineers and researchers.
 
+## 🆕 Latest Updates
+
+- **Supabase Integration**: Full user authentication and payment processing
+- **x402 Payment Model**: First paper conversion free, $5 for additional papers  
+- **Enhanced JSON Parsing**: Robust AI response parsing with fallback mechanisms
+- **User Management**: Complete user profiles, usage tracking, and payment history
+
+## 🛠️ Quick Setup
+
+1. **Clone and Install**:
+   ```bash
+   git clone <repository-url>
+   cd paperforge
+   npm install
+   ```
+
+2. **Environment Setup**:
+   ```bash
+   cp .env.example .env
+   # Fill in your API keys (see SUPABASE_SETUP.md for details)
+   ```
+
+3. **Start Development**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Supabase Setup**: Follow the detailed guide in `SUPABASE_SETUP.md`
+
 ## 🚀 Features
 
 ### Core Features

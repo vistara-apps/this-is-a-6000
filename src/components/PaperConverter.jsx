@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   X, 
@@ -14,19 +14,34 @@ import { paperService } from '../services/paperService'
 
 export const PaperConverter = ({ onClose }) => {
   const navigate = useNavigate()
-  const { user, addPaper, toast } = useApp()
+  const { user, userUsage, addPaper, processPaperConversion, toast } = useApp()
   const [inputType, setInputType] = useState('url')
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingStep, setProcessingStep] = useState('')
+  const [paymentRequired, setPaymentRequired] = useState(false)
+  const [estimatedCost, setEstimatedCost] = useState(0)
 
-  const canConvert = user && user.monthlyConversionsUsed < user.monthlyConversionsLimit
+  const canConvert = user && userUsage
+  const hasFreeConversion = userUsage?.hasFreeConversionAvailable
+  const needsPayment = !hasFreeConversion
+
+  // Check payment requirements when input changes
+  useEffect(() => {
+    if (input.trim() && needsPayment) {
+      setPaymentRequired(true)
+      setEstimatedCost(5.00) // $5 for additional papers
+    } else {
+      setPaymentRequired(false)
+      setEstimatedCost(0)
+    }
+  }, [input, needsPayment])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!canConvert) {
-      toast.error('Monthly conversion limit reached. Please upgrade to continue.')
+      toast.error('Please sign in to convert papers.')
       return
     }
 
@@ -38,6 +53,12 @@ export const PaperConverter = ({ onClose }) => {
     setIsProcessing(true)
 
     try {
+      // Show payment confirmation if needed
+      if (needsPayment) {
+        setProcessingStep('Processing payment for paper conversion...')
+        await new Promise(resolve => setTimeout(resolve, 1500))
+      }
+
       // Simulate processing steps with AI analysis
       setProcessingStep('Parsing paper URL and extracting metadata...')
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -54,11 +75,19 @@ export const PaperConverter = ({ onClose }) => {
       setProcessingStep('Finalizing analysis and insights...')
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Process the paper
+      // Process the paper with payment handling
       const paper = await paperService.processPaper(input, inputType)
+      
+      // Process payment and record conversion
+      const paymentResult = await processPaperConversion(paper)
+      
       addPaper(paper)
 
-      toast.success('Paper converted successfully! 🎉')
+      if (paymentResult.isFree) {
+        toast.success('Paper converted successfully! 🎉 (Free conversion used)')
+      } else {
+        toast.success(`Paper converted successfully! 🎉 (Charged $${paymentResult.amount})`)
+      }
       
       // Navigate to paper analysis page
       navigate(`/paper/${paper.id}`)
@@ -91,28 +120,36 @@ export const PaperConverter = ({ onClose }) => {
 
         <div className="p-6 space-y-6">
           {/* Usage Indicator */}
-          {user && (
+          {user && userUsage && (
             <div className="bg-bg border border-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Monthly Usage</span>
+                <span className="text-sm font-medium">Conversion Status</span>
                 <span className="text-sm text-text-muted">
-                  {user.monthlyConversionsUsed}/{user.monthlyConversionsLimit}
+                  {userUsage.freeConversionsUsed}/1 free • {userUsage.paidConversionsUsed} paid
                 </span>
               </div>
-              <div className="w-full bg-surface-hover rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all ${
-                    canConvert ? 'bg-primary' : 'bg-error'
-                  }`}
-                  style={{ 
-                    width: `${Math.min((user.monthlyConversionsUsed / user.monthlyConversionsLimit) * 100, 100)}%` 
-                  }}
-                />
-              </div>
-              {!canConvert && (
-                <div className="flex items-center space-x-2 mt-2 text-error text-sm">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Limit reached. Upgrade to continue converting papers.</span>
+              
+              {hasFreeConversion ? (
+                <div className="flex items-center space-x-2 text-success text-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Free conversion available</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-primary text-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Payment required: $5.00 per paper</span>
+                  </div>
+                  {paymentRequired && (
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                      <div className="text-sm">
+                        <div className="font-medium text-primary">Payment Required</div>
+                        <div className="text-text-muted">
+                          Estimated cost: <span className="font-medium">${estimatedCost.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

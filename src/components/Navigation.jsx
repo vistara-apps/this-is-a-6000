@@ -8,14 +8,20 @@ import {
   Crown, 
   Menu, 
   X,
-  Zap 
+  Zap,
+  User,
+  LogOut,
+  CreditCard
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { AuthModal } from './AuthModal'
 
 export const Navigation = () => {
   const location = useLocation()
-  const { user } = useApp()
+  const { user, userUsage, signOut } = useApp()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('signin')
 
   const navItems = [
     { path: '/', label: 'Home', icon: FileText },
@@ -25,6 +31,19 @@ export const Navigation = () => {
   ]
 
   const isActive = (path) => location.pathname === path
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
+
+  const openAuthModal = (mode) => {
+    setAuthMode(mode)
+    setAuthModalOpen(true)
+  }
 
   return (
     <nav className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
@@ -58,12 +77,15 @@ export const Navigation = () => {
 
           {/* User Section */}
           <div className="hidden md:flex items-center space-x-4">
-            {user && (
+            {user ? (
               <div className="flex items-center space-x-3">
-                <div className="text-sm text-text-muted">
-                  {user.monthlyConversionsUsed}/{user.monthlyConversionsLimit} conversions
-                </div>
-                {user.subscriptionTier === 'free' && (
+                {userUsage && (
+                  <div className="text-sm text-text-muted">
+                    {userUsage.freeConversionsUsed}/1 free • {userUsage.paidConversionsUsed} paid
+                  </div>
+                )}
+                
+                {user.profile?.subscription_tier === 'free' && (
                   <Link
                     to="/pricing"
                     className="flex items-center space-x-1 bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors"
@@ -72,6 +94,40 @@ export const Navigation = () => {
                     <span>Upgrade</span>
                   </Link>
                 )}
+                
+                <div className="relative group">
+                  <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-surface-hover transition-colors">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">{user.email}</span>
+                  </button>
+                  
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-surface-hover rounded-md transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => openAuthModal('signin')}
+                  className="px-4 py-2 text-sm font-medium text-text-muted hover:text-text transition-colors"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => openAuthModal('signup')}
+                  className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
+                >
+                  Sign Up
+                </button>
               </div>
             )}
           </div>
@@ -118,6 +174,12 @@ export const Navigation = () => {
           </div>
         )}
       </div>
+      
+      <AuthModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        mode={authMode}
+      />
     </nav>
   )
 }
