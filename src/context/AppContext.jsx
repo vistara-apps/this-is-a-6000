@@ -30,33 +30,60 @@ export const AppProvider = ({ children }) => {
         
         if (error) {
           console.error('Auth error:', error)
-          // Fall back to demo user for development
+          // Don't throw error for missing sessions, just use demo mode
+          if (error.message?.includes('AuthSessionMissingError') || error.message?.includes('session missing')) {
+            console.log('No auth session found, using demo mode')
+            setDemoUser()
+            return
+          }
+          // Fall back to demo user for other auth errors
           setDemoUser()
           return
         }
 
         if (authUser) {
-          // Get user profile from database
-          const { data: profile, error: profileError } = await supabase
-            .from('paperforge_users')
-            .select('*')
-            .eq('id', authUser.id)
-            .single()
+          try {
+            // Get user profile from database
+            const { data: profile, error: profileError } = await supabase
+              .from('paperforge_users')
+              .select('*')
+              .eq('id', authUser.id)
+              .single()
 
-          if (profileError) {
-            console.error('Profile fetch error:', profileError)
-            // Create new user profile
-            await createUserProfile(authUser)
-          } else {
-            // Get usage stats
-            const usageStats = await paymentService.getUserUsageStats(authUser.id)
-            
-            setUser({
-              ...profile,
-              monthlyConversionsUsed: usageStats.monthlyConversions,
-              totalConversions: usageStats.totalConversions,
-              totalSpent: usageStats.totalSpent
-            })
+            if (profileError) {
+              console.error('Profile fetch error:', profileError)
+              // If RLS blocks access or user doesn't exist, create new user profile
+              if (profileError.code === 'PGRST116' || profileError.message?.includes('row-level security')) {
+                await createUserProfile(authUser)
+              } else {
+                // Other errors, fall back to demo
+                setDemoUser()
+              }
+            } else {
+              // Get usage stats
+              try {
+                const usageStats = await paymentService.getUserUsageStats(authUser.id)
+                
+                setUser({
+                  ...profile,
+                  monthlyConversionsUsed: usageStats.monthlyConversions,
+                  totalConversions: usageStats.totalConversions,
+                  totalSpent: usageStats.totalSpent
+                })
+              } catch (statsError) {
+                console.error('Error fetching usage stats:', statsError)
+                // Set user without stats
+                setUser({
+                  ...profile,
+                  monthlyConversionsUsed: 0,
+                  totalConversions: 0,
+                  totalSpent: 0
+                })
+              }
+            }
+          } catch (dbError) {
+            console.error('Database access error:', dbError)
+            setDemoUser()
           }
         } else {
           // No authenticated user, use demo user
@@ -64,6 +91,7 @@ export const AppProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('User initialization error:', error)
+        // Always fall back to demo user on any error
         setDemoUser()
       }
     }
@@ -101,7 +129,12 @@ export const AppProvider = ({ children }) => {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error creating user profile:', error)
+        // If RLS policy prevents insertion or other DB errors, fall back to demo
+        setDemoUser()
+        return
+      }
 
       setUser({
         ...data,
