@@ -8,7 +8,8 @@ import {
   Crown, 
   Menu, 
   X,
-  Zap 
+  Zap,
+  CreditCard 
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
@@ -60,10 +61,14 @@ export const Navigation = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user && (
               <div className="flex items-center space-x-3">
-                <div className="text-sm text-text-muted">
-                  {user.monthlyConversionsUsed}/{user.monthlyConversionsLimit} conversions
-                </div>
-                {user.subscriptionTier === 'free' && (
+                <Link
+                  to="/payments"
+                  className="flex items-center space-x-1 text-sm text-text-muted hover:text-text transition-colors"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>{user.monthlyConversionsUsed}/{user.monthly_conversions_limit || user.monthlyConversionsLimit}</span>
+                </Link>
+                {(user.subscription_tier === 'free' || user.subscriptionTier === 'free') && (
                   <Link
                     to="/pricing"
                     className="flex items-center space-x-1 bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors"
@@ -104,7 +109,7 @@ export const Navigation = () => {
                   <span>{label}</span>
                 </Link>
               ))}
-              {user?.subscriptionTier === 'free' && (
+              {(user?.subscription_tier === 'free' || user?.subscriptionTier === 'free') && (
                 <Link
                   to="/pricing"
                   onClick={() => setIsMobileMenuOpen(false)}
