@@ -7,6 +7,7 @@ import { ArchitectureFinderPage } from './pages/ArchitectureFinderPage'
 import { BenchmarkingPage } from './pages/BenchmarkingPage'
 import { CollectionsPage } from './pages/CollectionsPage'
 import { PricingPage } from './pages/PricingPage'
+import { PaymentsPage } from './pages/PaymentsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { AppProvider } from './context/AppContext'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -25,6 +26,7 @@ function App() {
               <Route path="/benchmarking" element={<BenchmarkingPage />} />
               <Route path="/collections" element={<CollectionsPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

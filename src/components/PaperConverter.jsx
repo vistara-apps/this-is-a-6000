@@ -20,7 +20,10 @@ export const PaperConverter = ({ onClose }) => {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingStep, setProcessingStep] = useState('')
 
-  const canConvert = user && user.monthlyConversionsUsed < user.monthlyConversionsLimit
+  const canConvert = user && (
+    user.monthlyConversionsUsed < user.monthly_conversions_limit || 
+    user.monthlyConversionsUsed === 0 // First one is always free
+  )
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -54,8 +57,8 @@ export const PaperConverter = ({ onClose }) => {
       setProcessingStep('Finalizing analysis and insights...')
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Process the paper
-      const paper = await paperService.processPaper(input, inputType)
+      // Process the paper with user ID for payment tracking
+      const paper = await paperService.processPaper(input, inputType, user?.id)
       addPaper(paper)
 
       toast.success('Paper converted successfully! 🎉')
@@ -96,7 +99,7 @@ export const PaperConverter = ({ onClose }) => {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Monthly Usage</span>
                 <span className="text-sm text-text-muted">
-                  {user.monthlyConversionsUsed}/{user.monthlyConversionsLimit}
+                  {user.monthlyConversionsUsed}/{user.monthly_conversions_limit}
                 </span>
               </div>
               <div className="w-full bg-surface-hover rounded-full h-2">
@@ -105,7 +108,7 @@ export const PaperConverter = ({ onClose }) => {
                     canConvert ? 'bg-primary' : 'bg-error'
                   }`}
                   style={{ 
-                    width: `${Math.min((user.monthlyConversionsUsed / user.monthlyConversionsLimit) * 100, 100)}%` 
+                    width: `${Math.min((user.monthlyConversionsUsed / user.monthly_conversions_limit) * 100, 100)}%` 
                   }}
                 />
               </div>

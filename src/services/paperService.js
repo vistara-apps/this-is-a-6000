@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { paymentService } from './paymentService'
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || 'demo-key',
@@ -125,6 +126,83 @@ const extractArxivId = (input) => {
   return parsed && parsed.source === 'arxiv' ? parsed.id : null
 }
 
+// Extract analysis from text when JSON parsing fails
+const extractAnalysisFromText = (text) => {
+  try {
+    const analysis = {
+      keyInnovations: [],
+      problemStatement: "",
+      methodology: "",
+      applications: [],
+      complexity: "intermediate",
+      technicalBackground: [],
+      nextSteps: []
+    }
+
+    // Simple text parsing to extract structured information
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+    
+    let currentSection = null
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase()
+      
+      if (lowerLine.includes('key innovation') || lowerLine.includes('innovation')) {
+        currentSection = 'keyInnovations'
+      } else if (lowerLine.includes('problem statement') || lowerLine.includes('problem')) {
+        currentSection = 'problemStatement'
+      } else if (lowerLine.includes('methodology') || lowerLine.includes('method')) {
+        currentSection = 'methodology'
+      } else if (lowerLine.includes('application') || lowerLine.includes('use case')) {
+        currentSection = 'applications'
+      } else if (lowerLine.includes('complexity') || lowerLine.includes('difficulty')) {
+        currentSection = 'complexity'
+      } else if (lowerLine.includes('background') || lowerLine.includes('requirement')) {
+        currentSection = 'technicalBackground'
+      } else if (lowerLine.includes('next step') || lowerLine.includes('implementation')) {
+        currentSection = 'nextSteps'
+      } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+        // Bullet point
+        const content = line.replace(/^[•\-*]\s*/, '').trim()
+        if (currentSection && Array.isArray(analysis[currentSection])) {
+          analysis[currentSection].push(content)
+        }
+      } else if (currentSection && line.length > 10) {
+        // Regular text content
+        if (Array.isArray(analysis[currentSection])) {
+          analysis[currentSection].push(line)
+        } else if (typeof analysis[currentSection] === 'string') {
+          analysis[currentSection] = analysis[currentSection] ? `${analysis[currentSection]} ${line}` : line
+        }
+      }
+    }
+
+    // Set defaults if sections are empty
+    if (analysis.keyInnovations.length === 0) {
+      analysis.keyInnovations = ["Analysis extracted from unstructured text"]
+    }
+    if (!analysis.problemStatement) {
+      analysis.problemStatement = "Problem statement extracted from AI response text"
+    }
+    if (!analysis.methodology) {
+      analysis.methodology = "Methodology details extracted from AI response"
+    }
+    if (analysis.applications.length === 0) {
+      analysis.applications = ["Applications extracted from response text"]
+    }
+    if (analysis.technicalBackground.length === 0) {
+      analysis.technicalBackground = ["Technical background requirements"]
+    }
+    if (analysis.nextSteps.length === 0) {
+      analysis.nextSteps = ["Implementation steps extracted from response"]
+    }
+
+    return analysis
+  } catch (error) {
+    console.error('Error extracting analysis from text:', error)
+    return null
+  }
+}
+
 // AI-powered paper analysis using OpenRouter GPT-4o-mini
 const analyzePaperWithAI = async (paperData) => {
   try {
@@ -173,19 +251,48 @@ Format your response as JSON with the following structure:
 
     const analysisText = response.choices[0].message.content
     
-    // Try to parse JSON, fall back to structured text if parsing fails
+    // Enhanced JSON parsing with better error handling and cleanup
     try {
-      return JSON.parse(analysisText)
+      // Clean up the response text - remove markdown code blocks and extra whitespace
+      let cleanedText = analysisText.trim()
+      
+      // Remove markdown code block markers if present
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      // Try to find JSON object in the text
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        cleanedText = jsonMatch[0]
+      }
+      
+      // Parse the cleaned JSON
+      const parsed = JSON.parse(cleanedText)
+      
+      // Validate that we have the expected structure
+      if (parsed && typeof parsed === 'object' && parsed.keyInnovations) {
+        return parsed
+      } else {
+        throw new Error('Invalid JSON structure')
+      }
     } catch (parseError) {
-      console.warn('Failed to parse AI response as JSON, using fallback structure')
-      return {
-        keyInnovations: ["AI analysis temporarily unavailable"],
-        problemStatement: "Please check back later for AI-generated analysis",
-        methodology: "AI analysis in progress",
+      console.warn('Failed to parse AI response as JSON:', parseError.message)
+      console.warn('Raw response:', analysisText)
+      
+      // Try to extract information from the raw text as fallback
+      const fallbackAnalysis = extractAnalysisFromText(analysisText)
+      
+      return fallbackAnalysis || {
+        keyInnovations: ["AI analysis temporarily unavailable - JSON parsing failed"],
+        problemStatement: "Please check back later for AI-generated analysis. The AI response could not be parsed properly.",
+        methodology: "AI analysis in progress - response format issue detected",
         applications: ["General machine learning applications"],
         complexity: "intermediate",
         technicalBackground: ["Machine learning fundamentals"],
-        nextSteps: ["Review paper manually", "Implement basic version"]
+        nextSteps: ["Review paper manually", "Implement basic version", "Report parsing issue to support"]
       }
     }
   } catch (error) {
@@ -516,13 +623,43 @@ if __name__ == "__main__":
 }
 
 export const paperService = {
-  async processPaper(input, inputType) {
+  async processPaper(input, inputType, userId = null) {
     try {
+      // Check payment eligibility if user is provided
+      let paymentInfo = null
+      let requiresPayment = false
+      
+      if (userId) {
+        paymentInfo = await paymentService.canUserConvertPaper(userId)
+        requiresPayment = paymentInfo.requiresPayment
+        
+        if (!paymentInfo.canConvert && requiresPayment) {
+          throw new Error(`Payment required: $${paymentInfo.costPerPaper} for additional paper conversions. You have used ${paymentInfo.monthlyUsage}/${paymentInfo.monthlyLimit} free conversions this month.`)
+        }
+      }
+
       // Parse the paper URL/input
       const paperInfo = parsePaperUrl(input)
       
       if (!paperInfo) {
         throw new Error('Unable to parse paper URL. Please provide a valid arXiv, ACL, OpenReview, IEEE, PubMed URL, or direct PDF link.')
+      }
+
+      // Create payment record if required
+      let paymentRecord = null
+      if (requiresPayment && userId) {
+        paymentRecord = await paymentService.createPayment(userId, input)
+        
+        // Process the x402 payment
+        const paymentResult = await paymentService.processX402Payment(paymentRecord.id, {
+          amount: paymentInfo.costPerPaper,
+          currency: 'USD',
+          paper_url: input
+        })
+        
+        if (!paymentResult.success) {
+          throw new Error('Payment processing failed. Please try again.')
+        }
       }
 
       // Check if we have mock data for this paper (for demo purposes)
@@ -549,7 +686,7 @@ export const paperService = {
           }
         ])
         
-        return {
+        const result = {
           id: Date.now().toString(),
           ...paperData,
           processingStatus: 'completed',
@@ -571,8 +708,27 @@ export const paperService = {
           codeTemplates,
           architectureDiagram: '/api/placeholder/600/400',
           benchmarkResults: [],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          paymentInfo: paymentInfo ? {
+            wasPaymentRequired: requiresPayment,
+            paymentAmount: requiresPayment ? paymentInfo.costPerPaper : 0,
+            isFirstFree: paymentInfo.isFirstFree,
+            monthlyUsage: paymentInfo.monthlyUsage
+          } : null
         }
+
+        // Log the usage
+        if (userId) {
+          await paymentService.logPaperConversion(
+            userId, 
+            result.id, 
+            input, 
+            requiresPayment, 
+            paymentRecord?.id
+          )
+        }
+
+        return result
       }
 
       // Fetch paper metadata from the source
@@ -597,7 +753,7 @@ export const paperService = {
         }
       ])
       
-      return {
+      const result = {
         id: Date.now().toString(),
         ...paperData,
         processingStatus: 'completed',
@@ -614,8 +770,27 @@ export const paperService = {
         codeTemplates,
         architectureDiagram: '/api/placeholder/600/400',
         benchmarkResults: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        paymentInfo: paymentInfo ? {
+          wasPaymentRequired: requiresPayment,
+          paymentAmount: requiresPayment ? paymentInfo.costPerPaper : 0,
+          isFirstFree: paymentInfo.isFirstFree,
+          monthlyUsage: paymentInfo.monthlyUsage
+        } : null
       }
+
+      // Log the usage
+      if (userId) {
+        await paymentService.logPaperConversion(
+          userId, 
+          result.id, 
+          input, 
+          requiresPayment, 
+          paymentRecord?.id
+        )
+      }
+
+      return result
     } catch (error) {
       console.error('Paper processing failed:', error)
       throw new Error(`Failed to process paper: ${error.message}`)

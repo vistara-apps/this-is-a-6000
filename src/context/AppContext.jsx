@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
+import { supabase } from '../config/supabase'
+import { paymentService } from '../services/paymentService'
 
 const AppContext = createContext()
 
@@ -19,18 +21,99 @@ export const AppProvider = ({ children }) => {
   const [error, setError] = useState(null)
   const toast = useToast()
 
-  // Mock user for demo
+  // Initialize user and check authentication
   useEffect(() => {
-    setUser({
-      id: '1',
-      email: 'demo@paperforge.ai',
-      subscriptionTier: 'free',
-      monthlyConversionsUsed: 2,
-      monthlyConversionsLimit: 3,
-      researchInterests: ['Computer Vision', 'NLP'],
-      preferredFrameworks: ['PyTorch', 'TensorFlow']
-    })
+    const initializeUser = async () => {
+      try {
+        // Check if user is authenticated
+        const { data: { user: authUser }, error } = await supabase.auth.getUser()
+        
+        if (error) {
+          console.error('Auth error:', error)
+          // Fall back to demo user for development
+          setDemoUser()
+          return
+        }
+
+        if (authUser) {
+          // Get user profile from database
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .single()
+
+          if (profileError) {
+            console.error('Profile fetch error:', profileError)
+            // Create new user profile
+            await createUserProfile(authUser)
+          } else {
+            // Get usage stats
+            const usageStats = await paymentService.getUserUsageStats(authUser.id)
+            
+            setUser({
+              ...profile,
+              monthlyConversionsUsed: usageStats.monthlyConversions,
+              totalConversions: usageStats.totalConversions,
+              totalSpent: usageStats.totalSpent
+            })
+          }
+        } else {
+          // No authenticated user, use demo user
+          setDemoUser()
+        }
+      } catch (error) {
+        console.error('User initialization error:', error)
+        setDemoUser()
+      }
+    }
+
+    initializeUser()
   }, [])
+
+  const setDemoUser = () => {
+    setUser({
+      id: 'demo-user-1',
+      email: 'demo@paperforge.ai',
+      subscription_tier: 'free',
+      monthly_conversions_limit: 1,
+      monthlyConversionsUsed: 0,
+      totalConversions: 0,
+      totalSpent: 0,
+      researchInterests: ['Computer Vision', 'NLP'],
+      preferredFrameworks: ['PyTorch', 'TensorFlow'],
+      isDemo: true
+    })
+  }
+
+  const createUserProfile = async (authUser) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          id: authUser.id,
+          email: authUser.email,
+          subscription_tier: 'free',
+          monthly_conversions_limit: 1,
+          research_interests: ['Computer Vision', 'NLP'],
+          preferred_frameworks: ['PyTorch', 'TensorFlow']
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setUser({
+        ...data,
+        monthlyConversionsUsed: 0,
+        totalConversions: 0,
+        totalSpent: 0
+      })
+    } catch (error) {
+      console.error('Error creating user profile:', error)
+      setDemoUser()
+    }
+  }
 
   const addPaper = (paper) => {
     setPapers(prev => [paper, ...prev])
