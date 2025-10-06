@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database schema types for TypeScript-like documentation
 export const TABLES = {
-  USERS: 'users',
+  USERS: 'paperforge_users',
   PAPERS: 'papers', 
   PAYMENTS: 'payments',
   USAGE_LOGS: 'usage_logs'

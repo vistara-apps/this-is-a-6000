@@ -38,7 +38,7 @@ export const AppProvider = ({ children }) => {
         if (authUser) {
           // Get user profile from database
           const { data: profile, error: profileError } = await supabase
-            .from('users')
+            .from('paperforge_users')
             .select('*')
             .eq('id', authUser.id)
             .single()
@@ -89,7 +89,7 @@ export const AppProvider = ({ children }) => {
   const createUserProfile = async (authUser) => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('paperforge_users')
         .insert({
           id: authUser.id,
           email: authUser.email,

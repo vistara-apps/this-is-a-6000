@@ -39,9 +39,9 @@ This implementation adds Supabase integration to PaperForge for tracking x402 mi
 
 The following tables are created in Supabase:
 
-### Users Table
+### PaperForge Users Table
 ```sql
-users (
+paperforge_users (
   id UUID PRIMARY KEY,
   email VARCHAR(255) UNIQUE,
   subscription_tier VARCHAR(50) DEFAULT 'free',
@@ -52,12 +52,13 @@ users (
   updated_at TIMESTAMP
 )
 ```
+*Note: Renamed to `paperforge_users` to avoid conflicts with existing users table*
 
 ### Papers Table
 ```sql
 papers (
   id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
+  user_id UUID REFERENCES paperforge_users(id),
   title VARCHAR(500),
   authors TEXT[],
   abstract TEXT,
@@ -81,7 +82,7 @@ papers (
 ```sql
 payments (
   id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
+  user_id UUID REFERENCES paperforge_users(id),
   paper_id UUID REFERENCES papers(id),
   amount DECIMAL(10, 2),
   currency VARCHAR(3) DEFAULT 'USD',
@@ -100,7 +101,7 @@ payments (
 ```sql
 usage_logs (
   id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
+  user_id UUID REFERENCES paperforge_users(id),
   paper_id UUID REFERENCES papers(id),
   payment_id UUID REFERENCES payments(id),
   paper_url VARCHAR(1000),

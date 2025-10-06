@@ -3,8 +3,8 @@
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table
-CREATE TABLE IF NOT EXISTS users (
+-- PaperForge Users table (renamed to avoid conflicts with existing users table)
+CREATE TABLE IF NOT EXISTS paperforge_users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     subscription_tier VARCHAR(50) DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium', 'enterprise')),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Papers table
 CREATE TABLE IF NOT EXISTS papers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES paperforge_users(id) ON DELETE CASCADE,
     title VARCHAR(500) NOT NULL,
     authors TEXT[],
     abstract TEXT,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS papers (
 -- Payments table for x402 integration
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES paperforge_users(id) ON DELETE CASCADE,
     paper_id UUID REFERENCES papers(id) ON DELETE SET NULL,
     amount DECIMAL(10, 2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'USD',
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS payments (
 -- Usage logs table
 CREATE TABLE IF NOT EXISTS usage_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES paperforge_users(id) ON DELETE CASCADE,
     paper_id UUID REFERENCES papers(id) ON DELETE SET NULL,
     payment_id UUID REFERENCES payments(id) ON DELETE SET NULL,
     paper_url VARCHAR(1000),
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS usage_logs (
 -- Collections table
 CREATE TABLE IF NOT EXISTS collections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES paperforge_users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     paper_ids UUID[],
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS collections (
 );
 
 -- Indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_paperforge_users_email ON paperforge_users(email);
 CREATE INDEX IF NOT EXISTS idx_papers_user_id ON papers(user_id);
 CREATE INDEX IF NOT EXISTS idx_papers_arxiv_id ON papers(arxiv_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
@@ -91,20 +91,20 @@ CREATE INDEX IF NOT EXISTS idx_usage_logs_created_at ON usage_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_collections_user_id ON collections(user_id);
 
 -- Row Level Security (RLS) policies
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paperforge_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE papers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE collections ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see and modify their own data
-CREATE POLICY "Users can view own profile" ON users
+CREATE POLICY "Users can view own profile" ON paperforge_users
     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own profile" ON users
+CREATE POLICY "Users can update own profile" ON paperforge_users
     FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert own profile" ON users
+CREATE POLICY "Users can insert own profile" ON paperforge_users
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Papers policies
@@ -160,7 +160,7 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers for updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+CREATE TRIGGER update_paperforge_users_updated_at BEFORE UPDATE ON paperforge_users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_papers_updated_at BEFORE UPDATE ON papers
@@ -173,7 +173,7 @@ CREATE TRIGGER update_collections_updated_at BEFORE UPDATE ON collections
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert demo user for development
-INSERT INTO users (id, email, subscription_tier, monthly_conversions_limit, research_interests, preferred_frameworks)
+INSERT INTO paperforge_users (id, email, subscription_tier, monthly_conversions_limit, research_interests, preferred_frameworks)
 VALUES (
     'demo-user-1',
     'demo@paperforge.ai',
