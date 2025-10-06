@@ -7,64 +7,80 @@ import {
   Link as LinkIcon, 
   Loader2,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  User,
+  DollarSign
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { paperService } from '../services/paperService'
+import { AuthModal } from './AuthModal'
+import { PaymentModal } from './PaymentModal'
 
 export const PaperConverter = ({ onClose }) => {
   const navigate = useNavigate()
-  const { user, addPaper, toast } = useApp()
+  const { user, addPaper, toast, isAuthenticated, canAnalyzeForFree } = useApp()
+  const { isAuthenticated: authStatus } = useAuth()
   const [inputType, setInputType] = useState('url')
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingStep, setProcessingStep] = useState('')
-
-  const canConvert = user && user.monthlyConversionsUsed < user.monthlyConversionsLimit
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paperInfo, setPaperInfo] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!canConvert) {
-      toast.error('Monthly conversion limit reached. Please upgrade to continue.')
-      return
-    }
-
     if (!input.trim()) {
       toast.error('Please provide a paper URL or upload a file')
       return
     }
 
-    setIsProcessing(true)
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setShowAuthModal(true)
+      return
+    }
 
+    // Extract basic paper info for payment/analysis
     try {
-      // Simulate processing steps
-      setProcessingStep('Extracting paper metadata...')
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      const basicInfo = {
+        title: 'Research Paper Analysis',
+        source: 'unknown'
+      }
       
-      setProcessingStep('Analyzing methodology...')
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Try to extract more info if it's an arXiv URL
+      const arxivMatch = input.match(/arxiv\.org\/abs\/(\d+\.\d+)/)
+      if (arxivMatch) {
+        basicInfo.source = 'arxiv'
+        basicInfo.title = `arXiv:${arxivMatch[1]}`
+      }
       
-      setProcessingStep('Generating code templates...')
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      setProcessingStep('Creating visual diagrams...')
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      setPaperInfo(basicInfo)
+      setShowPaymentModal(true)
+    } catch (error) {
+      toast.error('Invalid paper URL format')
+    }
+  }
 
-      // Process the paper
-      const paper = await paperService.processPaper(input, inputType)
+  const handlePaymentSuccess = async (paper, paymentInfo) => {
+    try {
       addPaper(paper)
-
-      toast.success('Paper converted successfully! 🎉')
+      
+      if (paymentInfo.isFreeAnalysis) {
+        toast.success('Free analysis completed! 🎉')
+      } else {
+        toast.success('Payment successful! Paper analyzed! 🎉')
+      }
       
       // Navigate to paper analysis page
       navigate(`/paper/${paper.id}`)
       onClose()
     } catch (error) {
-      toast.error(`Failed to process paper: ${error.message}`)
+      toast.error('Error processing analysis result')
     } finally {
-      setIsProcessing(false)
-      setProcessingStep('')
+      setShowPaymentModal(false)
     }
   }
 
@@ -87,31 +103,36 @@ export const PaperConverter = ({ onClose }) => {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Usage Indicator */}
-          {user && (
+          {/* User Status Indicator */}
+          {isAuthenticated ? (
             <div className="bg-bg border border-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Monthly Usage</span>
+                <span className="text-sm font-medium">Analysis Status</span>
                 <span className="text-sm text-text-muted">
-                  {user.monthlyConversionsUsed}/{user.monthlyConversionsLimit}
+                  {user?.papersAnalyzed || 0} papers analyzed
                 </span>
               </div>
-              <div className="w-full bg-surface-hover rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all ${
-                    canConvert ? 'bg-primary' : 'bg-error'
-                  }`}
-                  style={{ 
-                    width: `${Math.min((user.monthlyConversionsUsed / user.monthlyConversionsLimit) * 100, 100)}%` 
-                  }}
-                />
-              </div>
-              {!canConvert && (
-                <div className="flex items-center space-x-2 mt-2 text-error text-sm">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Limit reached. Upgrade to continue converting papers.</span>
+              {canAnalyzeForFree ? (
+                <div className="flex items-center space-x-2 text-success text-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>First analysis is FREE! 🎉</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-primary text-sm">
+                  <DollarSign className="w-4 h-4" />
+                  <span>$5 per paper analysis</span>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <User className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Sign in required</span>
+              </div>
+              <p className="text-sm text-text-muted">
+                Create an account to analyze papers and save your results
+              </p>
             </div>
           )}
 
@@ -206,7 +227,7 @@ export const PaperConverter = ({ onClose }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={!canConvert || isProcessing || !input.trim()}
+              disabled={isProcessing || !input.trim()}
               className="w-full bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {isProcessing ? (
@@ -216,8 +237,24 @@ export const PaperConverter = ({ onClose }) => {
                 </>
               ) : (
                 <>
-                  <FileText className="w-5 h-5" />
-                  <span>Convert Paper</span>
+                  {isAuthenticated ? (
+                    canAnalyzeForFree ? (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Analyze Paper (FREE)</span>
+                      </>
+                    ) : (
+                      <>
+                        <DollarSign className="w-5 h-5" />
+                        <span>Analyze Paper ($5)</span>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <User className="w-5 h-5" />
+                      <span>Sign In to Analyze</span>
+                    </>
+                  )}
                 </>
               )}
             </button>
@@ -260,6 +297,25 @@ export const PaperConverter = ({ onClose }) => {
           </div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)}
+          initialMode="signup"
+        />
+      )}
+      
+      {/* Payment Modal */}
+      {showPaymentModal && paperInfo && (
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={handlePaymentSuccess}
+          paperInfo={paperInfo}
+          paperInput={input}
+          inputType={inputType}
+        />
+      )}
     </div>
   )
 }

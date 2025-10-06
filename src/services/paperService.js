@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 import axios from 'axios'
+import { databaseService } from './databaseService'
+import { supabase } from '../lib/supabase'
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY || 'demo-key',
@@ -480,7 +482,7 @@ if __name__ == "__main__":
 }
 
 export const paperService = {
-  async processPaper(input, inputType) {
+  async processPaper(input, inputType, userId = null, paymentIntentId = null) {
     const paperInfo = extractPaperInfo(input)
     
     if (!paperInfo) {
@@ -507,6 +509,21 @@ export const paperService = {
         primaryCategory: 'cs.AI',
         citations: 0,
         ...paperInfo
+      }
+    }
+    
+    // Save paper to database first (if user is logged in)
+    let savedPaper = null
+    if (userId) {
+      try {
+        savedPaper = await databaseService.savePaper({
+          user_id: userId,
+          ...paperData,
+          processingStatus: 'processing'
+        })
+      } catch (error) {
+        console.error('Failed to save paper to database:', error)
+        // Continue with processing even if DB save fails
       }
     }
     
@@ -569,8 +586,29 @@ Published: ${paperData.publishedDate}
       }
     }
     
-    return {
-      id: Date.now().toString(),
+    // Save analysis and code templates to database
+    if (savedPaper && userId) {
+      try {
+        await Promise.all([
+          databaseService.saveAnalysis(savedPaper.id, enhancedAnalysis),
+          databaseService.saveCodeTemplates(savedPaper.id, codeTemplates),
+          databaseService.updateUserProfile(userId, { processing_status: 'completed' })
+        ])
+        
+        // Increment user's papers analyzed count
+        await databaseService.incrementPapersAnalyzed(userId)
+        
+        // Update payment status if this was a paid analysis
+        if (paymentIntentId) {
+          await databaseService.updatePaymentStatus(paymentIntentId, 'completed')
+        }
+      } catch (error) {
+        console.error('Failed to save analysis to database:', error)
+      }
+    }
+    
+    const result = {
+      id: savedPaper?.id || Date.now().toString(),
       ...paperData,
       source: paperInfo.source,
       processingStatus: 'completed',
@@ -579,7 +617,102 @@ Published: ${paperData.publishedDate}
       architectureDiagram: '/api/placeholder/600/400',
       benchmarkResults: [],
       createdAt: new Date().toISOString(),
-      aiPowered: true
+      aiPowered: true,
+      userId
+    }
+    
+    return result
+  },
+
+  async getUserPapers(userId, limit = 50, offset = 0) {
+    try {
+      const papers = await databaseService.getUserPapers(userId, limit, offset)
+      
+      // Transform database format to app format
+      return papers.map(paper => ({
+        id: paper.id,
+        title: paper.title,
+        authors: paper.authors || [],
+        abstract: paper.abstract,
+        arxivId: paper.arxiv_id,
+        source: paper.source,
+        url: paper.source_url,
+        pdfUrl: paper.pdf_url,
+        publishedDate: paper.published_date,
+        primaryCategory: paper.primary_category,
+        citations: paper.citations || 0,
+        processingStatus: paper.processing_status,
+        aiPowered: paper.ai_powered,
+        createdAt: paper.created_at,
+        extractedSummary: paper.paper_analyses?.[0] ? {
+          keyInnovations: paper.paper_analyses[0].key_innovations || [],
+          problemStatement: paper.paper_analyses[0].problem_statement,
+          methodology: paper.paper_analyses[0].methodology,
+          results: paper.paper_analyses[0].results || {},
+          applications: paper.paper_analyses[0].applications || [],
+          complexity: paper.paper_analyses[0].complexity,
+          tldr: paper.paper_analyses[0].tldr,
+          codeInsights: paper.paper_analyses[0].code_insights || {}
+        } : null,
+        codeTemplates: paper.code_templates?.map(template => ({
+          framework: template.framework,
+          language: template.language,
+          code: template.code,
+          estimatedComplexity: template.estimated_complexity,
+          dependencies: template.dependencies || [],
+          algorithms: template.algorithms || []
+        })) || []
+      }))
+    } catch (error) {
+      console.error('Error fetching user papers:', error)
+      return []
+    }
+  },
+
+  async getPaper(paperId) {
+    try {
+      const paper = await databaseService.getPaper(paperId)
+      
+      if (!paper) return null
+      
+      // Transform database format to app format
+      return {
+        id: paper.id,
+        title: paper.title,
+        authors: paper.authors || [],
+        abstract: paper.abstract,
+        arxivId: paper.arxiv_id,
+        source: paper.source,
+        url: paper.source_url,
+        pdfUrl: paper.pdf_url,
+        publishedDate: paper.published_date,
+        primaryCategory: paper.primary_category,
+        citations: paper.citations || 0,
+        processingStatus: paper.processing_status,
+        aiPowered: paper.ai_powered,
+        createdAt: paper.created_at,
+        extractedSummary: paper.paper_analyses?.[0] ? {
+          keyInnovations: paper.paper_analyses[0].key_innovations || [],
+          problemStatement: paper.paper_analyses[0].problem_statement,
+          methodology: paper.paper_analyses[0].methodology,
+          results: paper.paper_analyses[0].results || {},
+          applications: paper.paper_analyses[0].applications || [],
+          complexity: paper.paper_analyses[0].complexity,
+          tldr: paper.paper_analyses[0].tldr,
+          codeInsights: paper.paper_analyses[0].code_insights || {}
+        } : null,
+        codeTemplates: paper.code_templates?.map(template => ({
+          framework: template.framework,
+          language: template.language,
+          code: template.code,
+          estimatedComplexity: template.estimated_complexity,
+          dependencies: template.dependencies || [],
+          algorithms: template.algorithms || []
+        })) || []
+      }
+    } catch (error) {
+      console.error('Error fetching paper:', error)
+      return null
     }
   },
   

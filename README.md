@@ -50,6 +50,9 @@ A modern web application that converts cutting-edge AI research papers into dige
 ## 🛠 Tech Stack
 
 - **Frontend**: React 18 with Vite
+- **Database**: Supabase (PostgreSQL with RLS)
+- **Authentication**: Supabase Auth
+- **Payments**: Stripe with $5 per analysis pricing
 - **AI Integration**: OpenRouter API with GPT-4o-mini
 - **Styling**: Tailwind CSS with custom design system
 - **Routing**: React Router v6
@@ -58,6 +61,34 @@ A modern web application that converts cutting-edge AI research papers into dige
 - **HTTP Client**: Axios for API requests
 - **Testing**: Vitest with React Testing Library
 - **Build Tool**: Vite
+
+## 🆕 New Features Added
+
+### 💾 Data Persistence
+- **Supabase Integration**: All papers and analyses saved to PostgreSQL database
+- **User Accounts**: Secure authentication with email/password
+- **Row Level Security**: Data isolated per user with proper security policies
+- **Collections**: Organize papers into custom collections
+- **Analysis History**: Access all your previous analyses anytime
+
+### 💳 Payment System
+- **Free First Analysis**: Every new user gets one free paper analysis
+- **$5 Per Analysis**: Subsequent analyses cost $5 each via Stripe
+- **Secure Payments**: PCI-compliant payment processing
+- **Payment History**: Track all your purchases and analyses
+- **Instant Processing**: Papers analyzed immediately after payment
+
+### 🔐 User Management
+- **Email Authentication**: Secure sign-up and sign-in
+- **Profile Management**: Update your account details
+- **Usage Tracking**: Monitor your analysis count and spending
+- **Password Reset**: Secure password recovery via email
+
+### 📊 Enhanced Analytics
+- **Personal Dashboard**: View your analysis statistics
+- **Paper Library**: Browse all your analyzed papers
+- **Search & Filter**: Find papers by title, author, or category
+- **Export Options**: Download analyses and code templates
 
 ## 🎨 Design System
 
@@ -125,16 +156,33 @@ To enable AI-powered paper analysis:
    - Create an account and generate an API key
    - Add credits to your account for API usage
 
-2. **Configure Environment**:
-   - Copy `.env.example` to `.env`
-   - Add your API key: `VITE_OPENAI_API_KEY=your_key_here`
+2. **Set up Supabase Database**:
+   - Create a [Supabase](https://supabase.com) project
+   - Run the SQL schema from `supabase-schema.sql`
+   - Get your project URL and anon key
 
-3. **Supported Paper Sources**:
+3. **Configure Stripe Payments**:
+   - Create a [Stripe](https://stripe.com) account
+   - Get your publishable key
+   - Set up webhooks for production
+
+4. **Configure Environment**:
+   - Copy `.env.example` to `.env`
+   - Add all required API keys and URLs
+
+5. **Supported Paper Sources**:
    - ✅ arXiv (URL or ID): `https://arxiv.org/abs/1706.03762` or `1706.03762`
    - ✅ IEEE Xplore: `https://ieeexplore.ieee.org/document/123456`
    - ✅ ACM Digital Library: `https://dl.acm.org/doi/10.1145/123.456`
    - ✅ DOI Links: `https://doi.org/10.1038/nature12345`
    - ✅ Direct PDF URLs
+
+### 💳 Payment & Pricing
+
+- **First Analysis**: FREE for all new users
+- **Additional Analyses**: $5 per paper
+- **Payment Processing**: Secure Stripe integration
+- **Data Persistence**: All analyses saved to your account
 
 ### 🧪 Running Tests
 
